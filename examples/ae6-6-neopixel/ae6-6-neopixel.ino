@@ -1,5 +1,6 @@
 #include <xDuinoRails_DccLightsAndFunctions.h>
 #include <LightSources/NeopixelRgbMulti.h>
+#include <LightSources/NeopixelRgbMultiSwissAe66.h>
 #include <interfaces/ICVAccess.h>
 #include <map>
 
@@ -42,7 +43,7 @@ void setup() {
     // Front lights are white
     auto frontLights = std::make_unique<NeopixelRgbMulti>(FRONT_LIGHT_PIN, 6, 255, 255, 255);
     // Back lights are red
-    auto backLights = std::make_unique<NeopixelRgbMulti>(BACK_LIGHT_PIN, 6, 255, 0, 0);
+    auto backLights = std::make_unique<NeopixelRgbMultiSwissAe66>(BACK_LIGHT_PIN, 3, 255, 0, 0);
 
     // Add the light sources to the controller. They get assigned output IDs 0 and 1.
     controller.addLightSource(std::move(frontLights));
