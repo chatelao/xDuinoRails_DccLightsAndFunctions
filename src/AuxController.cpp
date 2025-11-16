@@ -364,7 +364,11 @@ void AuxController::parseRcn227PerOutputV2(ICVAccess& cvAccess) {
             if (blocking_func != 255) {
                 ConditionVariable blocking_cv;
                 blocking_cv.id = 400 + blocking_func; // Unique ID
-                blocking_cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, blocking_func});
+                if (blocking_func > 28) {
+                    blocking_cv.conditions.push_back({TriggerSource::BINARY_STATE, TriggerComparator::IS_TRUE, (uint16_t)(blocking_func)});
+                } else {
+                    blocking_cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, blocking_func});
+                }
                 addConditionVariable(blocking_cv);
                 blocking_cv_id = blocking_cv.id;
             }
@@ -380,7 +384,11 @@ void AuxController::parseRcn227PerOutputV2(ICVAccess& cvAccess) {
 
                     ConditionVariable cv;
                     cv.id = 500 + (output_num * 8) + (dir * 4) + i; // Unique ID
-                    cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, funcs[i]});
+                    if (funcs[i] > 28) {
+                        cv.conditions.push_back({TriggerSource::BINARY_STATE, TriggerComparator::IS_TRUE, (uint16_t)(funcs[i])});
+                    } else {
+                        cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, funcs[i]});
+                    }
                     cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, (uint8_t)((dir == 0) ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE)});
                     addConditionVariable(cv);
 
