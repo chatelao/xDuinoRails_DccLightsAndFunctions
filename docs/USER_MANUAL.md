@@ -8,7 +8,7 @@ Function mapping is the process of linking a DCC function key (like F1, F2, etc.
 
 To select which mapping method your decoder should use, you must set **CV 96**. The value you write to this CV determines which of the following mapping systems will be active.
 
-- **CV 96 = 1**: Basic RCN-225 Mapping (CVs 33-46)
+- **CV 96 = 1**: RCN-225 Basic Mapping (CVs 33-46)
 - **CV 96 = 2**: RCN-227 Per-Function Mapping
 - **CV 96 = 3**: RCN-227 Per-Output Mapping (Version 1)
 - **CV 96 = 4**: RCN-227 Per-Output Mapping (Version 2)
