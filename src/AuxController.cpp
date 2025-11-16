@@ -6,6 +6,7 @@
 #include "cv_definitions.h"
 #include <math.h>
 #include "effects/Effect.h"
+#include "LightSources/SingleLed.h"
 
 namespace xDuinoRails {
 
@@ -18,8 +19,17 @@ AuxController::~AuxController() {
 }
 
 void AuxController::addPhysicalOutput(uint8_t pin, OutputType type) {
-    _outputs.emplace_back(pin, type);
-    _outputs.back().attach();
+    if (type == OutputType::SERVO) {
+        _outputs.emplace_back(pin);
+    } else {
+        _outputs.emplace_back(std::make_unique<SingleLed>(pin));
+    }
+    _outputs.back().begin();
+}
+
+void AuxController::addLightSource(std::unique_ptr<LightSource> lightSource) {
+    _outputs.emplace_back(std::move(lightSource));
+    _outputs.back().begin();
 }
 
 void AuxController::update(uint32_t delta_ms) {
@@ -29,6 +39,9 @@ void AuxController::update(uint32_t delta_ms) {
     }
     for (auto& func : _logical_functions) {
         func->update(delta_ms);
+    }
+    for (auto& output : _outputs) {
+        output.update(delta_ms);
     }
 }
 
