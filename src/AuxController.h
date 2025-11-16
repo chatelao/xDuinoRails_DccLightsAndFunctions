@@ -9,7 +9,9 @@
 #include <vector>
 #include <map>
 #include <cstdint>
+#include <memory>
 #include "interfaces/ICVAccess.h"
+#include "LightSources/LightSource.h"
 #include "PhysicalOutput.h"
 #include "LogicalFunction.h"
 #include "FunctionMapping.h"
@@ -42,11 +44,17 @@ public:
     ~AuxController();
 
     /**
-     * @brief Adds and initializes a physical output. Must be called for each output pin in setup().
+     * @brief Adds and initializes a physical output.
      * @param pin The microcontroller pin number.
-     * @param type The type of the output (PWM or SERVO).
+     * @param type The type of the output (LIGHT_SOURCE or SERVO).
      */
     void addPhysicalOutput(uint8_t pin, OutputType type);
+
+    /**
+     * @brief Adds and initializes a light source physical output.
+     * @param lightSource A unique_ptr to a LightSource object.
+     */
+    void addLightSource(std::unique_ptr<LightSource> lightSource);
 
     /**
      * @brief Updates the state of all logical functions and effects. Call every loop.
