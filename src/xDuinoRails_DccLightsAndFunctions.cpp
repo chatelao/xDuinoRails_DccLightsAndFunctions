@@ -2,7 +2,7 @@
  * @file AuxController.cpp
  * @brief Implements the AuxController class and all related helper classes.
  */
-#include "AuxController.h"
+#include "xDuinoRails_DccLightsAndFunctions.h"
 #include "cv_definitions.h"
 #include <math.h>
 #include "effects/Effect.h"
