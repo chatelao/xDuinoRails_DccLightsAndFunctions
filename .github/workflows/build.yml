@@ -1,0 +1,29 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install arduino-cli
+      run: |
+        curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+        echo "PATH=$PATH:$(pwd)/bin" >> $GITHUB_ENV
+
+    - name: Update core and library indices
+      run: |
+        arduino-cli core update-index
+        arduino-cli lib update-index
+
+    - name: Install dependencies
+      run: |
+        arduino-cli lib install "Servo"
+        arduino-cli lib install "Adafruit NeoPixel"
+        arduino-cli core install arduino:avr
+
+    - name: Compile example
+      run: arduino-cli compile --fqbn arduino:avr:uno examples/ae6-6-neopixel/
