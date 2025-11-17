@@ -92,5 +92,78 @@
 #define RCN227_PO_V2_BLOCK_CV_BASE 1025
 #define RCN227_PO_V3_BLOCK_CV_BASE 1281
 
+// --- Effect Configuration CVs (Indexed Block) ---
+// To access, set CV31=0, CV32=EFFECTS_BLOCK_PAGE
+#define EFFECTS_BLOCK_PAGE 50
+
+// Base address for the effects configuration block in the decoder's internal memory space.
+#define EFFECTS_BLOCK_CV_BASE 1537
+
+// Each of the 24 physical outputs gets a block of 8 CVs for effect configuration.
+// To configure an output, calculate its base CV from the start of the block (257):
+// base_cv = 257 + ( (output_number - 1) * EFFECTS_BLOCK_CV_PER_OUTPUT )
+#define EFFECTS_BLOCK_CV_PER_OUTPUT 8
+
+// Offsets within each output's 8-CV block
+#define EFFECTS_CV_OFFSET_TYPE          0 // CV1: Effect Type ID
+#define EFFECTS_CV_OFFSET_PARAM1_LSB    1 // CV2: Parameter 1 (LSB)
+#define EFFECTS_CV_OFFSET_PARAM1_MSB    2 // CV3: Parameter 1 (MSB)
+#define EFFECTS_CV_OFFSET_PARAM2_LSB    3 // CV4: Parameter 2 (LSB)
+#define EFFECTS_CV_OFFSET_PARAM2_MSB    4 // CV5: Parameter 2 (MSB)
+#define EFFECTS_CV_OFFSET_PARAM3_LSB    5 // CV6: Parameter 3 (LSB)
+#define EFFECTS_CV_OFFSET_PARAM3_MSB    6 // CV7: Parameter 3 (MSB)
+#define EFFECTS_CV_OFFSET_RESERVED      7 // CV8: Reserved
+
+// Effect Type IDs (for use in EFFECTS_CV_OFFSET_TYPE)
+#define EFFECT_TYPE_NONE              0 // Steady light (default)
+#define EFFECT_TYPE_DIMMING           1 // Simple dimming effect
+#define EFFECT_TYPE_FLICKER           2 // Flicker effect (e.g., firebox)
+#define EFFECT_TYPE_STROBE            3 // Strobe light
+#define EFFECT_TYPE_MARS_LIGHT        4 // Mars light
+#define EFFECT_TYPE_SOFT_START_STOP   5 // Soft start/stop fade effect
+#define EFFECT_TYPE_SERVO             6 // Servo control
+#define EFFECT_TYPE_SMOKE_GENERATOR   7 // Smoke generator control
+
+/*
+Parameter Mapping for each Effect Type:
+-----------------------------------------
+
+EFFECT_TYPE_NONE (0):
+  - No parameters.
+
+EFFECT_TYPE_DIMMING (1):
+  - Param1 (LSB): Full brightness (0-255)
+  - Param2 (LSB): Dimmed brightness (0-255)
+
+EFFECT_TYPE_FLICKER (2):
+  - Param1 (LSB): Base brightness (0-255)
+  - Param2 (LSB): Flicker depth (0-255)
+  - Param3 (LSB): Flicker speed (0-255)
+
+EFFECT_TYPE_STROBE (3):
+  - Param1 (LSB/MSB): Strobe frequency in Hz (e.g., 1-65535)
+  - Param2 (LSB): Duty cycle in percent (1-100)
+  - Param3 (LSB): Brightness (0-255)
+
+EFFECT_TYPE_MARS_LIGHT (4):
+  - Param1 (LSB/MSB): Oscillation frequency in mHz (milli-Hertz)
+  - Param2 (LSB): Peak brightness (0-255)
+  - Param3 (LSB): Phase shift in percent of cycle (-100 to 100)
+
+EFFECT_TYPE_SOFT_START_STOP (5):
+  - Param1 (LSB/MSB): Fade-in time in milliseconds (0-65535)
+  - Param2 (LSB/MSB): Fade-out time in milliseconds (0-65535)
+  - Param3 (LSB): Target brightness (0-255)
+
+EFFECT_TYPE_SERVO (6):
+  - Param1 (LSB): Endpoint A angle (0-180)
+  - Param2 (LSB): Endpoint B angle (0-180)
+  - Param3 (LSB): Travel speed (1-255)
+
+EFFECT_TYPE_SMOKE_GENERATOR (7):
+  - Param1 (LSB): Heater enabled (0=off, 1=on)
+  - Param2 (LSB): Fan speed (0-255)
+
+*/
 
 #endif // CV_DEFINITIONS_H

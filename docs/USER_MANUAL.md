@@ -208,3 +208,58 @@ Logic:
 -   **Condition 2:** F6, Any Direction. Value = `6 + 0 = 6`.
 -   **Condition 3:** F2, Blocking. Value = `2 + 192 = 194`.
 -   **Program:** CV 265 = 64, CV 266 = 6, CV 267 = 194, CV 268-272 = 255.
+
+---
+
+## Method 4: Configuring Lighting and Other Effects
+
+Beyond simply turning outputs on and off, this library allows you to configure a wide variety of dynamic effects, from a simple flicker to complex strobe patterns. This is handled by a dedicated block of indexed CVs.
+
+### How it Works
+
+1.  **Access the Indexed CVs:** Program **CV 31 = 0** and **CV 32 = 50**.
+2.  **Configure:** The memory block is organized into 8-byte chunks, with one chunk for each of the 24 physical outputs. To find the starting CV for a specific output, use this formula:
+    `base_cv = 257 + ( (output_number - 1) * 8 )`
+
+Within each 8-byte block, the CVs have the following roles:
+
+| CV Offset from Base | Name              | Description                                        |
+|---------------------|-------------------|----------------------------------------------------|
+| +0                  | **Effect Type**   | A number that selects the effect (see table below). |
+| +1                  | **Parameter 1 LSB** | Low byte of the first parameter.                     |
+| +2                  | **Parameter 1 MSB** | High byte of the first parameter (if needed).      |
+| +3                  | **Parameter 2 LSB** | Low byte of the second parameter.                    |
+| +4                  | **Parameter 2 MSB** | High byte of the second parameter (if needed).     |
+| +5                  | **Parameter 3 LSB** | Low byte of the third parameter.                     |
+| +6                  | **Parameter 3 MSB** | High byte of the third parameter (if needed).      |
+| +7                  | **Reserved**      | Not currently used.                                |
+
+### Effect Types and Parameters
+
+Here is a list of the available effect types and the parameters they use.
+
+| Effect Name     | Type ID | Parameter 1 (CVs +1, +2) | Parameter 2 (CVs +3, +4) | Parameter 3 (CVs +5, +6) |
+|-----------------|---------|--------------------------|--------------------------|--------------------------|
+| **Steady**      | 0       | (Unused)                 | (Unused)                 | (Unused)                 |
+| **Dimming**     | 1       | Full Brightness (0-255)  | Dimmed Brightness (0-255)| (Unused)                 |
+| **Flicker**     | 2       | Base Brightness (0-255)  | Flicker Depth (0-255)    | Flicker Speed (0-255)    |
+| **Strobe**      | 3       | Frequency (Hz)           | Duty Cycle (%)           | Brightness (0-255)       |
+| **Mars Light**  | 4       | Frequency (mHz)          | Peak Brightness (0-255)  | Phase Shift (%)          |
+| **Soft Start**  | 5       | Fade-In Time (ms)        | Fade-Out Time (ms)       | Target Brightness (0-255)|
+| **Servo**       | 6       | Endpoint A (angle)       | Endpoint B (angle)       | Travel Speed (1-255)     |
+| **Smoke Gen.**  | 7       | Heater (0=off, 1=on)     | Fan Speed (0-255)        | (Unused)                 |
+
+### Example: Configuring a Strobe Light on Output 6
+
+Let's say you want to add a strobe light to your locomotive on **Output 6**. You want it to flash at **5 Hz** with a **30% duty cycle** and full brightness.
+
+1.  **Access the Effects Block:** Program **CV 31 = 0**, **CV 32 = 50**.
+2.  **Calculate Base CV:** For Output 6, the base CV is `257 + ((6 - 1) * 8) = 257 + 40 = 297`.
+3.  **Program the Effect CVs:**
+    -   **CV 297 (Effect Type):** The ID for Strobe is **3**.
+    -   **CV 298 (Param 1 LSB):** The frequency is 5 Hz. Since this is less than 256, the LSB is **5** and the MSB is 0.
+    -   **CV 299 (Param 1 MSB):** **0**.
+    -   **CV 300 (Param 2 LSB):** The duty cycle is 30%. The value is **30**.
+    -   **CV 302 (Param 3 LSB):** Full brightness. The value is **255**.
+
+Now, whenever Output 6 is activated by your chosen function mapping method, it will operate as a strobe light with these settings.
