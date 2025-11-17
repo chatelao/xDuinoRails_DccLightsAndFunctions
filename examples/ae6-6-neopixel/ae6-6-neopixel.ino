@@ -39,9 +39,9 @@ void setup() {
 
     Serial.println("AE6/6 Neopixel Example");
 
-    // Create the light sources for the front and back lights (6 pixels each)
+    // Create the light sources for the front and back lights (3 pixels each)
     // Front lights are white
-    auto frontLights = std::make_unique<NeopixelRgbMulti>(FRONT_LIGHT_PIN, 6, 255, 255, 255);
+    auto frontLights = std::make_unique<NeopixelRgbMulti>(FRONT_LIGHT_PIN, 3, 255, 255, 255);
     // Back lights are red
     auto backLights = std::make_unique<NeopixelRgbMultiSwissAe66>(BACK_LIGHT_PIN, 3, 255, 0, 0);
 
@@ -56,12 +56,12 @@ void setup() {
     cvAccess.writeCV(CV_FUNCTION_MAPPING_METHOD, (uint8_t)FunctionMappingMethod::RCN_225);
 
     // Map front lights (Output 0) to F0 Forward.
-    // CV 33 (CV_OUTPUT_LOCATION_CONFIG_START) controls F0F.
+    // CV 33 (CV_OUTPUT_LOCATION_CONFIG_START) controls F0f.
     // We set bit 0 to map Output 0.
     cvAccess.writeCV(CV_OUTPUT_LOCATION_CONFIG_START, 1 << 0);
 
     // Map back lights (Output 1) to F0 Reverse.
-    // CV 34 (CV_OUTPUT_LOCATION_CONFIG_START + 1) controls F0B.
+    // CV 34 (CV_OUTPUT_LOCATION_CONFIG_START + 1) controls F0b.
     // We set bit 1 to map Output 1.
     cvAccess.writeCV(CV_OUTPUT_LOCATION_CONFIG_START + 1, 1 << 1);
 
