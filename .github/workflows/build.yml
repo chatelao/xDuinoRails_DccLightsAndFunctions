@@ -25,5 +25,10 @@ jobs:
         arduino-cli lib install "Adafruit NeoPixel"
         arduino-cli core install arduino:avr
 
+    - name: Link library to sketchbook
+      run: |
+        mkdir -p "$HOME/Arduino/libraries"
+        ln -s "$GITHUB_WORKSPACE" "$HOME/Arduino/libraries/xDuinoRails_DccLightsAndFunctions"
+
     - name: Compile example
       run: arduino-cli compile --fqbn arduino:avr:uno examples/ae6-6-neopixel/
