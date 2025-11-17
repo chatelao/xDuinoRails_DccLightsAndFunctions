@@ -196,7 +196,7 @@ void AuxController::parseRcn225(ICVAccess& cvAccess) {
         for (int output_bit = 0; output_bit < 8; ++output_bit) {
             if ((mapping_mask >> output_bit) & 1) {
                 uint8_t physical_output_id = output_bit + 1;
-                LogicalFunction* lf = new LogicalFunction(new EffectSteady(255));
+                LogicalFunction* lf = new LogicalFunction(createEffectFromCVs(cvAccess, physical_output_id));
                 lf->addOutput(getOutputById(physical_output_id));
                 addLogicalFunction(lf);
                 uint8_t lf_idx = _logical_functions.size() - 1;
@@ -249,7 +249,7 @@ void AuxController::parseRcn227PerOutputV3(ICVAccess& cvAccess) {
         }
 
         if (!activating_cv_ids.empty()) {
-            lf = new LogicalFunction(new EffectSteady(255));
+            lf = new LogicalFunction(createEffectFromCVs(cvAccess, output_num + 1));
             lf->addOutput(getOutputById(output_num + 1));
             addLogicalFunction(lf);
             uint8_t lf_idx = _logical_functions.size() - 1;
@@ -297,7 +297,7 @@ void AuxController::parseRcn227PerFunction(ICVAccess& cvAccess) {
             for (int output_bit = 0; output_bit < 24; ++output_bit) {
                 if ((output_mask >> output_bit) & 1) {
                     uint8_t physical_output_id = output_bit + 1;
-                    LogicalFunction* lf = new LogicalFunction(new EffectSteady(255));
+                    LogicalFunction* lf = new LogicalFunction(createEffectFromCVs(cvAccess, physical_output_id));
                     lf->addOutput(getOutputById(physical_output_id));
                     addLogicalFunction(lf);
                     uint8_t lf_idx = _logical_functions.size() - 1;
@@ -330,7 +330,7 @@ void AuxController::parseRcn227PerOutputV1(ICVAccess& cvAccess) {
             if (func_mask == 0) continue;
 
             if (lf == nullptr) {
-                lf = new LogicalFunction(new EffectSteady(255));
+                lf = new LogicalFunction(createEffectFromCVs(cvAccess, output_num + 1));
                 lf->addOutput(getOutputById(output_num + 1));
                 addLogicalFunction(lf);
             }
@@ -352,6 +352,38 @@ void AuxController::parseRcn227PerOutputV1(ICVAccess& cvAccess) {
                 }
             }
         }
+    }
+}
+
+Effect* AuxController::createEffectFromCVs(ICVAccess& cvAccess, uint8_t output_num) {
+    cvAccess.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
+    cvAccess.writeCV(CV_INDEXED_CV_LOW_BYTE, EFFECTS_BLOCK_PAGE);
+
+    uint16_t base_cv = 257 + ((output_num - 1) * EFFECTS_BLOCK_CV_PER_OUTPUT);
+    uint8_t effect_type = cvAccess.readCV(base_cv + EFFECTS_CV_OFFSET_TYPE);
+
+    uint16_t p1 = (uint16_t)cvAccess.readCV(base_cv + EFFECTS_CV_OFFSET_PARAM1_MSB) << 8 | cvAccess.readCV(base_cv + EFFECTS_CV_OFFSET_PARAM1_LSB);
+    uint16_t p2 = (uint16_t)cvAccess.readCV(base_cv + EFFECTS_CV_OFFSET_PARAM2_MSB) << 8 | cvAccess.readCV(base_cv + EFFECTS_CV_OFFSET_PARAM2_LSB);
+    uint16_t p3 = (uint16_t)cvAccess.readCV(base_cv + EFFECTS_CV_OFFSET_PARAM3_MSB) << 8 | cvAccess.readCV(base_cv + EFFECTS_CV_OFFSET_PARAM3_LSB);
+
+    switch (effect_type) {
+        case EFFECT_TYPE_DIMMING:
+            return new EffectDimming(p1 & 0xFF, p2 & 0xFF);
+        case EFFECT_TYPE_FLICKER:
+            return new EffectFlicker(p1 & 0xFF, p2 & 0xFF, p3 & 0xFF);
+        case EFFECT_TYPE_STROBE:
+            return new EffectStrobe(p1, p2 & 0xFF, p3 & 0xFF);
+        case EFFECT_TYPE_MARS_LIGHT:
+            return new EffectMarsLight(p1, p2 & 0xFF, static_cast<int8_t>(p3 & 0xFF));
+        case EFFECT_TYPE_SOFT_START_STOP:
+            return new EffectSoftStartStop(p1, p2, p3 & 0xFF);
+        case EFFECT_TYPE_SERVO:
+            return new EffectServo(p1 & 0xFF, p2 & 0xFF, p3 & 0xFF);
+        case EFFECT_TYPE_SMOKE_GENERATOR:
+            return new EffectSmokeGenerator((p1 & 0xFF) > 0, p2 & 0xFF);
+        case EFFECT_TYPE_NONE:
+        default:
+            return new EffectSteady(255);
     }
 }
 
@@ -389,7 +421,7 @@ void AuxController::parseRcn227PerOutputV2(ICVAccess& cvAccess) {
             for (int i = 0; i < 3; ++i) {
                 if (funcs[i] != 255) {
                     if (lf == nullptr) {
-                        lf = new LogicalFunction(new EffectSteady(255));
+                        lf = new LogicalFunction(createEffectFromCVs(cvAccess, output_num + 1));
                         lf->addOutput(getOutputById(output_num + 1));
                         addLogicalFunction(lf);
                     }

@@ -134,6 +134,7 @@ private:
     PhysicalOutput* getOutputById(uint8_t id);
 
     // --- CV Loading ---
+    Effect* createEffectFromCVs(ICVAccess& cvAccess, uint8_t output_num);
     void parseRcn225(ICVAccess& cvAccess);
     void parseRcn227PerFunction(ICVAccess& cvAccess);
     void parseRcn227PerOutputV1(ICVAccess& cvAccess);
