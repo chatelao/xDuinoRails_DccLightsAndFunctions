@@ -15,6 +15,6 @@ This project adheres to the **RailCommunity (RCN) standards** for function mappi
 
 As defined in `RCN-225`, **CV 96** is used to select which function mapping system the decoder should use. The value written to this CV corresponds to one of the methods described in `RCN-227`.
 
-Based on the specifications and the implementation in this codebase, the **"per-output" mapping systems (RCN-227, Section 3) are the primary and recommended methods.** The simpler "per-function" system (RCN-227, Section 2) is considered deprecated and has been removed from this project.
+This project supports all function mapping systems described in RCN-227, including both "per-function" and "per-output" methods.
 
 When working on features related to function mapping, always refer to these two documents to ensure compliance with the established standards.
