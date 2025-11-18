@@ -31,5 +31,10 @@ jobs:
         mkdir -p "$HOME/Arduino/libraries"
         ln -s "$GITHUB_WORKSPACE" "$HOME/Arduino/libraries/xDuinoRails_DccLightsAndFunctions"
 
+    - name: Debug Libraries
+      run: |
+        echo "Listing installed libraries:"
+        ls -l "$HOME/Arduino/libraries"
+
     - name: Compile example
       run: arduino-cli compile --fqbn arduino:avr:uno examples/ae6-6-neopixel/
