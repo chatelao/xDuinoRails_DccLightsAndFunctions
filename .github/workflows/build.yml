@@ -23,6 +23,7 @@ jobs:
       run: |
         arduino-cli lib install "Servo"
         arduino-cli lib install "Adafruit NeoPixel"
+        arduino-cli lib install "ArduinoSTL"
         arduino-cli core install arduino:avr
 
     - name: Link library to sketchbook
