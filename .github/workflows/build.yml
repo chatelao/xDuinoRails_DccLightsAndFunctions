@@ -1,0 +1,40 @@
+name: Build Examples
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install arduino-cli
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+          sudo mv bin/arduino-cli /usr/local/bin/
+
+      - name: Initialize arduino-cli
+        run: |
+          arduino-cli config init
+          arduino-cli core update-index
+
+      - name: Install AVR core
+        run: arduino-cli core install arduino:avr
+
+      - name: Install libraries
+        run: |
+          arduino-cli lib install Servo
+          arduino-cli lib install "Adafruit NeoPixel"
+          arduino-cli lib install ArduinoSTL
+
+      - name: Create symlink for the library
+        run: |
+          mkdir -p ~/Arduino/libraries
+          ln -s $GITHUB_WORKSPACE ~/Arduino/libraries/xDuinoRails_DccLightsAndFunctions
+
+      - name: Compile all examples
+        run: |
+          for d in examples/*/; do
+            arduino-cli compile --fqbn arduino:avr:uno "$d"
+          done

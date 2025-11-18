@@ -18,3 +18,7 @@ As defined in `RCN-225`, **CV 96** is used to select which function mapping syst
 This project supports all function mapping systems described in RCN-227, including both "per-function" and "per-output" methods.
 
 When working on features related to function mapping, always refer to these two documents to ensure compliance with the established standards.
+
+## Continuous Integration
+
+The project includes a GitHub Actions workflow (`.github/workflows/build.yml`) that automatically builds all example sketches. This workflow is configured to run on every push and pull request to any branch to ensure that no changes break the examples.
