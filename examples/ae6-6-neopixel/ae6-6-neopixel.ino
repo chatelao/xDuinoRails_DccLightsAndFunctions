@@ -43,9 +43,9 @@ void setup() {
 
     // Create the light sources for the front and back lights (3 pixels each)
     // Front lights are white
-    auto frontLights = std::make_unique<NeopixelRgbMulti>(FRONT_LIGHT_PIN, 3, 255, 255, 255);
+    auto frontLights = std::unique_ptr<NeopixelRgbMulti>(new NeopixelRgbMulti(FRONT_LIGHT_PIN, 3, 255, 255, 255));
     // Back lights are red
-    auto backLights = std::make_unique<NeopixelRgbMultiSwissAe66>(BACK_LIGHT_PIN, 3, 255, 0, 0);
+    auto backLights = std::unique_ptr<NeopixelRgbMultiSwissAe66>(new NeopixelRgbMultiSwissAe66(BACK_LIGHT_PIN, 3, 255, 0, 0));
 
     // Add the light sources to the controller. They get assigned output IDs 0 and 1.
     controller.addLightSource(std::move(frontLights));
