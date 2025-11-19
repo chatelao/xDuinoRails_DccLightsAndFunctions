@@ -37,5 +37,5 @@ jobs:
         run: |
           STL_PATH=$(find ~/Arduino/libraries -name 'ArduinoSTL' -type d | head -n 1)
           for d in examples/*/; do
-            arduino-cli compile --fqbn arduino:avr:uno --build-property "compiler.cpp.extra_flags=-std=gnu++11 -I${STL_PATH}/src" "$d"
+            arduino-cli compile --fqbn arduino:avr:uno --build-property "compiler.cpp.extra_flags=-std=gnu++14 -I${STL_PATH}/src" "$d"
           done

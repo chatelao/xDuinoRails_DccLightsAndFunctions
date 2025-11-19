@@ -4,7 +4,7 @@
 #include <LightSources/NeopixelRgbMultiSwissAe66.h>
 #include <interfaces/ICVAccess.h>
 #include <map>
-#include "cv_definitions.h"
+#include <cv_definitions.h>
 
 // Define the pins for the Neopixel strips
 #define FRONT_LIGHT_PIN 6
