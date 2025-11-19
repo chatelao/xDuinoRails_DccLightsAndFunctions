@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <memory>
 #include <xDuinoRails_DccLightsAndFunctions.h>
 #include <LightSources/NeopixelRgbMulti.h>
