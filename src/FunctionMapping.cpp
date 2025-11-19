@@ -1,5 +1,5 @@
 #include "FunctionMapping.h"
-#include "AuxController.h"
+#include "xDuinoRails_DccLightsAndFunctions.h"
 
 namespace xDuinoRails {
 
