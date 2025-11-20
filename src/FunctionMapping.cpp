@@ -27,10 +27,10 @@ bool ConditionVariable::evaluate(const AuxController& controller) const {
 }
 
 bool MappingRule::evaluate(const AuxController& controller) const {
-    for (uint8_t id : positive_conditions) {
+    for (uint16_t id : positive_conditions) {
         if (!controller.getConditionVariableState(id)) return false;
     }
-    for (uint8_t id : negative_conditions) {
+    for (uint16_t id : negative_conditions) {
         if (controller.getConditionVariableState(id)) return false;
     }
     return true;

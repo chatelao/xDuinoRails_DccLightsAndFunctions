@@ -52,6 +52,8 @@ void AuxController::loadFromCVs(ICVAccess& cvAccess) {
         case FunctionMappingMethod::RCN_225:
             parseRcn225(cvAccess);
             break;
+        // Note: RCN-227 "per-function" is implemented for completeness but is not the recommended approach.
+        // The "per-output" methods below offer greater flexibility.
         case FunctionMappingMethod::RCN_227_PER_FUNCTION:
             parseRcn227PerFunction(cvAccess);
             break;
@@ -110,7 +112,7 @@ uint16_t AuxController::getSpeed() const {
     return _speed;
 }
 
-bool AuxController::getConditionVariableState(uint8_t cv_id) const {
+bool AuxController::getConditionVariableState(uint16_t cv_id) const {
     auto it = _cv_states.find(cv_id);
     return (it != _cv_states.end()) ? it->second : false;
 }
@@ -212,12 +214,12 @@ void AuxController::parseRcn225(ICVAccess& cvAccess) {
 
 void AuxController::parseRcn227PerOutputV3(ICVAccess& cvAccess) {
     cvAccess.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
-    cvAccess.writeCV(CV_INDEXED_CV_LOW_BYTE, 43);
+    cvAccess.writeCV(CV_INDEXED_CV_LOW_BYTE, RCN227_PER_OUTPUT_V3_PAGE);
     const int num_outputs = 32;
     for (int output_num = 0; output_num < num_outputs; ++output_num) {
         LogicalFunction* lf = nullptr;
         uint16_t base_cv = 257 + (output_num * 8);
-        std::vector<uint8_t> activating_cv_ids, blocking_cv_ids;
+        std::vector<uint16_t> activating_cv_ids, blocking_cv_ids;
 
         for (int i = 0; i < 4; ++i) {
             uint8_t cv_value = cvAccess.readCV(base_cv + i);
@@ -226,7 +228,7 @@ void AuxController::parseRcn227PerOutputV3(ICVAccess& cvAccess) {
             uint8_t dir_bits = (cv_value >> 6) & 0x03;
             bool is_blocking = (dir_bits == 0x03);
             ConditionVariable cv;
-            cv.id = 700 + (output_num * 8) + i;
+            cv.id = CV_ID_BASE_RCN227_PER_OUTPUT_V3 + (output_num * 8) + i;
             cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, func_num});
             if (dir_bits == 0x01) cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, DECODER_DIRECTION_FORWARD});
             else if (dir_bits == 0x02) cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, DECODER_DIRECTION_REVERSE});
@@ -241,7 +243,7 @@ void AuxController::parseRcn227PerOutputV3(ICVAccess& cvAccess) {
             bool is_blocking = (cv_high & 0x80) != 0;
             uint16_t value = ((cv_high & 0x7F) << 8) | cv_low;
             ConditionVariable cv;
-            cv.id = 700 + (output_num * 8) + 4 + i;
+            cv.id = CV_ID_BASE_RCN227_PER_OUTPUT_V3 + (output_num * 8) + 4 + i;
             if (value <= 68) cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, (uint8_t)value});
             else cv.conditions.push_back({TriggerSource::BINARY_STATE, TriggerComparator::IS_TRUE, (uint8_t)(value - 69)});
             addConditionVariable(cv);
@@ -253,7 +255,7 @@ void AuxController::parseRcn227PerOutputV3(ICVAccess& cvAccess) {
             lf->addOutput(getOutputById(output_num + 1));
             addLogicalFunction(lf);
             uint8_t lf_idx = _logical_functions.size() - 1;
-            for (uint8_t activating_id : activating_cv_ids) {
+            for (uint16_t activating_id : activating_cv_ids) {
                 MappingRule rule;
                 rule.target_logical_function_id = lf_idx;
                 rule.positive_conditions.push_back(activating_id);
@@ -267,7 +269,7 @@ void AuxController::parseRcn227PerOutputV3(ICVAccess& cvAccess) {
 
 void AuxController::parseRcn227PerFunction(ICVAccess& cvAccess) {
     cvAccess.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
-    cvAccess.writeCV(CV_INDEXED_CV_LOW_BYTE, 40);
+    cvAccess.writeCV(CV_INDEXED_CV_LOW_BYTE, RCN227_PER_FUNCTION_PAGE);
 
     const int num_functions = 32;
 
@@ -285,10 +287,10 @@ void AuxController::parseRcn227PerFunction(ICVAccess& cvAccess) {
             cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, (uint8_t)((dir == 0) ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE)});
             addConditionVariable(cv);
 
-            uint8_t blocking_cv_id = 0;
+            uint16_t blocking_cv_id = 0;
             if (blocking_func_num != 255) {
                 ConditionVariable blocking_cv;
-                blocking_cv.id = 100 + blocking_func_num;
+                blocking_cv.id = CV_ID_BASE_RCN227_PER_FUNCTION_BLOCKING + blocking_func_num;
                 blocking_cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, blocking_func_num});
                 addConditionVariable(blocking_cv);
                 blocking_cv_id = blocking_cv.id;
@@ -316,7 +318,7 @@ void AuxController::parseRcn227PerFunction(ICVAccess& cvAccess) {
 
 void AuxController::parseRcn227PerOutputV1(ICVAccess& cvAccess) {
     cvAccess.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
-    cvAccess.writeCV(CV_INDEXED_CV_LOW_BYTE, 41);
+    cvAccess.writeCV(CV_INDEXED_CV_LOW_BYTE, RCN227_PER_OUTPUT_V1_PAGE);
 
     const int num_outputs = 24;
 
@@ -339,7 +341,7 @@ void AuxController::parseRcn227PerOutputV1(ICVAccess& cvAccess) {
             for (int func_num = 0; func_num < 32; ++func_num) {
                 if ((func_mask >> func_num) & 1) {
                     ConditionVariable cv;
-                    cv.id = 200 + (output_num * 64) + (dir * 32) + func_num; // Unique ID
+                    cv.id = CV_ID_BASE_RCN227_PER_OUTPUT_V1 + (output_num * 64) + (dir * 32) + func_num; // Unique ID
                     cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, (uint8_t)func_num});
                     cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, (uint8_t)((dir == 0) ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE)});
                     addConditionVariable(cv);
@@ -389,7 +391,7 @@ Effect* AuxController::createEffectFromCVs(ICVAccess& cvAccess, uint8_t output_n
 
 void AuxController::parseRcn227PerOutputV2(ICVAccess& cvAccess) {
     cvAccess.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
-    cvAccess.writeCV(CV_INDEXED_CV_LOW_BYTE, 42);
+    cvAccess.writeCV(CV_INDEXED_CV_LOW_BYTE, RCN227_PER_OUTPUT_V2_PAGE);
 
     const int num_outputs = 32;
 
@@ -405,10 +407,10 @@ void AuxController::parseRcn227PerOutputV2(ICVAccess& cvAccess) {
             };
             uint8_t blocking_func = cvAccess.readCV(base_cv + 3);
 
-            uint8_t blocking_cv_id = 0;
+            uint16_t blocking_cv_id = 0;
             if (blocking_func != 255) {
                 ConditionVariable blocking_cv;
-                blocking_cv.id = 400 + blocking_func; // Unique ID
+                blocking_cv.id = CV_ID_BASE_RCN227_PER_OUTPUT_V2_BLOCKING + blocking_func; // Unique ID
                 if (blocking_func > 28) {
                     blocking_cv.conditions.push_back({TriggerSource::BINARY_STATE, TriggerComparator::IS_TRUE, (uint16_t)(blocking_func)});
                 } else {
@@ -428,7 +430,7 @@ void AuxController::parseRcn227PerOutputV2(ICVAccess& cvAccess) {
                     uint8_t lf_idx = _logical_functions.size() - 1;
 
                     ConditionVariable cv;
-                    cv.id = 500 + (output_num * 8) + (dir * 4) + i; // Unique ID
+                    cv.id = CV_ID_BASE_RCN227_PER_OUTPUT_V2 + (output_num * 8) + (dir * 4) + i; // Unique ID
                     if (funcs[i] > 28) {
                         cv.conditions.push_back({TriggerSource::BINARY_STATE, TriggerComparator::IS_TRUE, (uint16_t)(funcs[i])});
                     } else {

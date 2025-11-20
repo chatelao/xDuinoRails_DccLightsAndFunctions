@@ -52,15 +52,15 @@ struct Condition {
 };
 
 struct ConditionVariable {
-    uint8_t id;
+    uint16_t id;
     std::vector<Condition> conditions;
     bool evaluate(const AuxController& controller) const;
 };
 
 struct MappingRule {
     uint8_t target_logical_function_id;
-    std::vector<uint8_t> positive_conditions;
-    std::vector<uint8_t> negative_conditions;
+    std::vector<uint16_t> positive_conditions;
+    std::vector<uint16_t> negative_conditions;
     MappingAction action;
     bool evaluate(const AuxController& controller) const;
 };
