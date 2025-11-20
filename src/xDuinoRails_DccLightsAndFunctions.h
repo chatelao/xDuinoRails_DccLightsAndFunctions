@@ -107,7 +107,7 @@ public:
      * @param cv_id The ID of the ConditionVariable.
      * @return The cached boolean result of the variable's evaluation.
      */
-    bool getConditionVariableState(uint8_t cv_id) const;
+    bool getConditionVariableState(uint16_t cv_id) const;
     /**
      * @brief Gets the current value of a binary state.
      * @param state_number The ID of the binary state to check.
@@ -151,7 +151,7 @@ private:
     DecoderDirection _direction = DECODER_DIRECTION_FORWARD;
     uint16_t _speed = 0;
     std::map<uint16_t, bool> m_binary_states;
-    std::map<uint8_t, bool> _cv_states;
+    std::map<uint16_t, bool> _cv_states;
     bool _state_changed = true;
 };
 
