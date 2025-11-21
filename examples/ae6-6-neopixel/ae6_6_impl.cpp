@@ -5,6 +5,8 @@
 #include <cv_definitions.h>
 #include <interfaces/ICVAccess.h>
 #include <map>
+#include <memory>
+#include <vector>
 #include "ae6_6_impl.h"
 
 // Define the pins for the Neopixel strips

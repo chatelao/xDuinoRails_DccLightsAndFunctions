@@ -24,4 +24,4 @@ jobs:
             - name: ArduinoSTL
           cli-compile-flags: |
             - --build-property
-            - "build.extra_flags=-std=gnu++11"
+            - "build.extra_flags=-std=gnu++11 -I/home/runner/Arduino/libraries/ArduinoSTL/src"
