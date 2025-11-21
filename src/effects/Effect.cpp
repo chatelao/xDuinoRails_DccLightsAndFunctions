@@ -90,7 +90,13 @@ void EffectStrobe::update(uint32_t delta_ms, const std::vector<PhysicalOutput*>&
         for (auto* output : outputs) output->setValue(0);
         return;
     }
-    _timer = (_timer + delta_ms) % _strobe_period_ms;
+
+    // Optimized to avoid modulo
+    _timer += delta_ms;
+    if (_timer >= _strobe_period_ms) {
+        _timer %= _strobe_period_ms; // Fallback only if exceeded
+    }
+
     uint8_t value = (_timer < _on_time_ms) ? _brightness : 0;
     for (auto* output : outputs) {
         output->setValue(value);
@@ -188,17 +194,31 @@ void EffectSoftStartStop::update(uint32_t delta_ms, const std::vector<PhysicalOu
 }
 
 EffectServo::EffectServo(uint8_t endpoint_a, uint8_t endpoint_b, uint8_t travel_speed)
-    : _endpoint_a(endpoint_a), _endpoint_b(endpoint_b), _current_angle(endpoint_a), _target_angle(endpoint_a) {
+    : _endpoint_a(endpoint_a), _endpoint_b(endpoint_b), _current_angle((uint16_t)endpoint_a << 8), _target_angle((uint16_t)endpoint_a << 8) {
+
+    // Calculate speed in fixed point 8.8 (units per ms)
+    // Original formula: speed_f = 0.01f + (travel_speed / 255.0f) * 0.49f; (degrees per ms)
+    // In fixed point 8.8, 1 degree = 256 units.
+    // Min speed (0.01 deg/ms) = 0.01 * 256 = 2.56 ~ 3 units/ms
+    // Max speed (0.5 deg/ms) = 0.5 * 256 = 128 units/ms
+
     if (travel_speed == 0) {
-        _speed = 180.0f;
+        // Instant move (very high speed)
+        _speed = 0xFFFF; // Max value
     } else {
-        _speed = 0.01f + (travel_speed / 255.0f) * 0.49f;
+        // map 1-255 to 3-128
+        // We can use map() or manual calculation
+        // 3 + (travel_speed * (128 - 3)) / 255
+        uint32_t speed_calc = 3 + ((uint32_t)travel_speed * 125) / 255;
+        _speed = (uint16_t)speed_calc;
     }
 }
 
 void EffectServo::setActive(bool active) {
     if (active && !_is_active) {
-        _target_angle = _is_at_a ? _endpoint_b : _endpoint_a;
+        // Set new target
+        uint8_t target = _is_at_a ? _endpoint_b : _endpoint_a;
+        _target_angle = (uint16_t)target << 8;
         _is_at_a = !_is_at_a;
     }
     Effect::setActive(active);
@@ -206,17 +226,29 @@ void EffectServo::setActive(bool active) {
 
 void EffectServo::update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) {
     if (_current_angle != _target_angle) {
-        float delta_angle = _speed * delta_ms;
+        // Calculate delta angle in fixed point
+        // prevent overflow if delta_ms is huge
+        uint32_t delta_angle = (uint32_t)_speed * delta_ms;
+
         if (_current_angle < _target_angle) {
-            _current_angle += delta_angle;
-            if (_current_angle > _target_angle) _current_angle = _target_angle;
+            // Moving up
+            if ((uint32_t)_target_angle - _current_angle < delta_angle) {
+                _current_angle = _target_angle;
+            } else {
+                _current_angle += (uint16_t)delta_angle;
+            }
         } else {
-            _current_angle -= delta_angle;
-            if (_current_angle < _target_angle) _current_angle = _target_angle;
+            // Moving down
+            if ((uint32_t)_current_angle - _target_angle < delta_angle) {
+                _current_angle = _target_angle;
+            } else {
+                _current_angle -= (uint16_t)delta_angle;
+            }
         }
     }
     for (auto* output : outputs) {
-        output->setServoAngle((uint16_t)_current_angle);
+        // Output angle is integer part (high byte)
+        output->setServoAngle(_current_angle >> 8);
     }
 }
 

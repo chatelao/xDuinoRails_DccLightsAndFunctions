@@ -1,0 +1,27 @@
+name: Compile Examples
+
+on:
+  push:
+    branches: [ "main", "**" ]
+  pull_request:
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Compile examples
+        uses: arduino/compile-sketches@v1
+        with:
+          fqbn: arduino:avr:uno
+          libraries: |
+            - source-path: ./
+            - name: Servo
+            - name: Adafruit NeoPixel
+            - name: FastLED
+            - name: ArduinoSTL
+          cli-compile-flags: |
+            - --build-property
+            - "build.extra_flags=-std=gnu++11"
