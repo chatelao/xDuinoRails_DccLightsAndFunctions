@@ -4,6 +4,7 @@
 #include "../PhysicalOutput.h"
 #include <vector>
 #include <cstdint>
+#include <FastLED.h>
 
 namespace xDuinoRails {
 
@@ -48,8 +49,8 @@ private:
     uint8_t _base_brightness;
     uint8_t _flicker_depth;
     uint8_t _flicker_speed;
-    float _noise_position;
-    float _noise_increment;
+    uint16_t _noise_position; // Changed to uint16_t for FastLED inoise8
+    uint16_t _noise_increment; // Changed to uint16_t
 };
 
 class EffectStrobe : public Effect {
@@ -69,10 +70,9 @@ public:
     EffectMarsLight(uint16_t oscillation_frequency_mhz, uint8_t peak_brightness, int8_t phase_shift_percent);
     void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
 private:
-    float _oscillation_period_ms;
-    float _peak_brightness;
-    float _phase_shift_rad;
-    float _angle;
+    uint8_t _bpm; // Beats per minute, derived from frequency
+    uint8_t _peak_brightness;
+    uint8_t _phase_shift; // 0-255
 };
 
 class EffectSoftStartStop : public Effect {
@@ -81,10 +81,11 @@ public:
     void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
     void setActive(bool active) override;
 private:
-    float _fade_in_increment;
-    float _fade_out_increment;
+    uint16_t _fade_in_time_ms;
+    uint16_t _fade_out_time_ms;
     uint8_t _target_brightness;
-    float _current_brightness;
+    uint32_t _current_brightness; // Changed to 32-bit integer (8.8 fixed point requires 16+ bits, keeping 32 for safety and compatibility with accumulators)
+    uint32_t _timer; // Added for timing
 };
 
 class EffectServo : public Effect {
@@ -108,6 +109,24 @@ public:
 private:
     bool _heater_enabled;
     uint8_t _fan_speed;
+};
+
+// New Effect: Fire (Virtual Strip Demo)
+class EffectFire : public Effect {
+public:
+    EffectFire(uint8_t cooling, uint8_t sparking, uint8_t length);
+    ~EffectFire();
+
+    // Delete copy constructor and assignment operator to prevent double-free
+    EffectFire(const EffectFire&) = delete;
+    EffectFire& operator=(const EffectFire&) = delete;
+
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
+private:
+    uint8_t _cooling;
+    uint8_t _sparking;
+    uint8_t _length;
+    uint8_t* _heat; // Virtual heat array
 };
 
 }
