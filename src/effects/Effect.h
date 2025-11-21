@@ -96,9 +96,9 @@ public:
 private:
     uint8_t _endpoint_a;
     uint8_t _endpoint_b;
-    float _speed;
-    float _current_angle;
-    float _target_angle;
+    uint16_t _speed; // Fixed point 8.8 (units per ms)
+    uint16_t _current_angle; // Fixed point 8.8
+    uint16_t _target_angle; // Fixed point 8.8
     bool _is_at_a = true;
 };
 
