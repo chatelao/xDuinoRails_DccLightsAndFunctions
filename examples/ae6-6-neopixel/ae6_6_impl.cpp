@@ -1,4 +1,6 @@
 #include <Arduino.h>
+#undef min
+#undef max
 #include <xDuinoRails_DccLightsAndFunctions.h>
 #include <LightSources/NeopixelRgbMulti.h>
 #include <LightSources/NeopixelRgbMultiSwissAe66.h>
