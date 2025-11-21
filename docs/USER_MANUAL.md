@@ -24,10 +24,20 @@ This is the simplest and most common method for function mapping, directly compa
 
 Each CV from 33 to 46 corresponds to a specific DCC function. The value you write to that CV is a bitmask, where each bit represents a physical output. If a bit is set to `1`, the corresponding output will be activated when the DCC function is turned on.
 
-- **Bit 0** corresponds to **Output 1**
-- **Bit 1** corresponds to **Output 2**
-- **Bit 2** corresponds to **Output 3**
-- ...and so on, up to Bit 7 for Output 8.
+To calculate the value to write into the CV, use the table below. Simply find the outputs you want to turn on and add their **Values** together.
+
+#### Bit Value Conversion Table
+
+| Output # | Bit # | Value |
+| :---: | :---: | :---: |
+| 1 | 0 | **1** |
+| 2 | 1 | **2** |
+| 3 | 2 | **4** |
+| 4 | 3 | **8** |
+| 5 | 4 | **16** |
+| 6 | 5 | **32** |
+| 7 | 6 | **64** |
+| 8 | 7 | **128** |
 
 The CVs are assigned to functions as follows:
 
@@ -54,9 +64,9 @@ Let's say you want DCC function **F2** to turn on the lights connected to **Outp
 
 1.  **Identify the CV:** According to the table, F2 is controlled by **CV 36**.
 2.  **Determine the Bitmask:**
-    - To activate Output 3, you need to set **Bit 2** (value `4`).
-    - To activate Output 4, you need to set **Bit 3** (value `8`).
-3.  **Calculate the CV Value:** Add the values of the bits together: `4 + 8 = 12`.
+    - To activate Output 3, look at the table above: Output 3 corresponds to Value **4**.
+    - To activate Output 4, look at the table above: Output 4 corresponds to Value **8**.
+3.  **Calculate the CV Value:** Add the values together: `4 + 8 = 12`.
 4.  **Program the CV:** Write the value `12` to **CV 36**.
 
 Now, whenever you activate F2 on your DCC controller, both Output 3 and Output 4 will turn on.
@@ -74,10 +84,22 @@ This method uses a large block of indexed CVs. To access them, you must first se
 The memory is organized into 4-byte chunks for each function and direction:
 
 -   **Bytes 1, 2, 3:** A 24-bit bitmask that defines which outputs (1-24) this function will activate.
-    -   Byte 1 controls outputs 1-8.
-    -   Byte 2 controls outputs 9-16.
-    -   Byte 3 controls outputs 17-24.
 -   **Byte 4:** The **Blocking Function**. If the DCC function number specified in this byte is **ON**, the current function will be blocked and will not activate its outputs. A value of `255` means no function is blocking it.
+
+#### Output Mask Table
+
+Use this table to calculate the value for each of the first 3 bytes.
+
+| Bit | Value | Byte 1 (Outputs 1-8) | Byte 2 (Outputs 9-16) | Byte 3 (Outputs 17-24) |
+| :---: | :---: | :---: | :---: | :---: |
+| 0 | **1** | Output 1 | Output 9 | Output 17 |
+| 1 | **2** | Output 2 | Output 10 | Output 18 |
+| 2 | **4** | Output 3 | Output 11 | Output 19 |
+| 3 | **8** | Output 4 | Output 12 | Output 20 |
+| 4 | **16** | Output 5 | Output 13 | Output 21 |
+| 5 | **32** | Output 6 | Output 14 | Output 22 |
+| 6 | **64** | Output 7 | Output 15 | Output 23 |
+| 7 | **128** | Output 8 | Output 16 | Output 24 |
 
 The CVs are laid out sequentially:
 
@@ -96,7 +118,7 @@ Let's configure a Mars light. We want **F3** to activate **Output 5**, but only 
 1.  **Select the Method:** Program **CV 96 = 2**.
 2.  **Access the Indexed CVs:** Program **CV 31 = 0** and **CV 32 = 40**.
 3.  **Identify the CVs:** We are configuring **F3 (Forward)**. This corresponds to the CV block for F3, specifically for the forward direction. A little math tells us this is the 8th block (F0 Fwd/Rev, F1 Fwd/Rev, F2 Fwd/Rev, F3 Fwd), starting at CV `257 + (7 * 4) = 285`. So, we will be working with CVs 285-288.
-4.  **Determine the Output Mask:** We want to activate **Output 5**. This is bit 4 of the first byte. The value is `2^4 = 16`.
+4.  **Determine the Output Mask:** We want to activate **Output 5**. Looking at the table, Output 5 is in **Byte 1** and has a value of **16**.
     -   **CV 285 = 16** (Output mask byte 1)
     -   **CV 286 = 0**  (Output mask byte 2)
     -   **CV 287 = 0**  (Output mask byte 3)
@@ -119,11 +141,22 @@ This method is like a big checklist. For each output, you specify exactly which 
 
 1.  **Select the Method:** Program **CV 96 = 3**.
 2.  **Access the Indexed CVs:** Program **CV 31 = 0** and **CV 32 = 41**.
-3.  **Configure:** The memory block is organized with 4 bytes for each output and direction. These 4 bytes are a 32-bit bitmask. Each bit corresponds to a DCC function (F0-F31). If a bit is set, that function will activate the output.
-    -   **Byte 1:** Bitmask for functions F0-F7.
-    -   **Byte 2:** Bitmask for functions F8-F15.
-    -   **Byte 3:** Bitmask for functions F16-F23.
-    -   **Byte 4:** Bitmask for functions F24-F31.
+3.  **Configure:** The memory block is organized with 4 bytes for each output and direction. Each bit corresponds to a DCC function (F0-F31).
+
+#### Function Bitmask Table
+
+Use this table to calculate the value for each byte. Find the function you want, note its Value, and add it to the total for that byte.
+
+| Bit | Value | Byte 1 (F0-F7) | Byte 2 (F8-F15) | Byte 3 (F16-F23) | Byte 4 (F24-F31) |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| 0 | **1** | F0 | F8 | F16 | F24 |
+| 1 | **2** | F1 | F9 | F17 | F25 |
+| 2 | **4** | F2 | F10 | F18 | F26 |
+| 3 | **8** | F3 | F11 | F19 | F27 |
+| 4 | **16** | F4 | F12 | F20 | F28 |
+| 5 | **32** | F5 | F13 | F21 | F29 |
+| 6 | **64** | F6 | F14 | F22 | F30 |
+| 7 | **128** | F7 | F15 | F23 | F31 |
 
 #### Example:
 
@@ -131,11 +164,11 @@ You want **Output 2** to be activated by **F1**, **F5**, and **F10** when the lo
 
 1.  **Identify CVs:** We are configuring **Output 2 (Forward)**. This is the 3rd block in the memory map, starting at CV `257 + (2 * 4) = 265`. We are using CVs 265-268.
 2.  **Calculate Bitmasks:**
-    -   F1 and F5 are in the first byte. The bitmask is `(1<<1) | (1<<5) = 2 | 32 = 34`.
-    -   F10 is in the second byte. The bitmask is `(1<<(10-8)) = 1<<2 = 4`.
+    -   **Byte 1 (F0-F7):** We need F1 (Value 2) and F5 (Value 32). `2 + 32 = 34`.
+    -   **Byte 2 (F8-F15):** We need F10 (Value 4). `4`.
 3.  **Program CVs:**
-    -   **CV 265 = 34** (F0-F7 mask)
-    -   **CV 266 = 4** (F8-F15 mask)
+    -   **CV 265 = 34**
+    -   **CV 266 = 4**
     -   **CV 267 = 0**
     -   **CV 268 = 0**
 
@@ -173,14 +206,20 @@ This is the most advanced system, giving you fine-grained control over direction
 1.  **Select the Method:** Program **CV 96 = 5**.
 2.  **Access the Indexed CVs:** Program **CV 31 = 0** and **CV 32 = 43**.
 3.  **Configure:** The memory is organized with **8 bytes per output**. Direction is no longer separate; it's encoded into each byte.
-    -   **Bytes 1-4:** These bytes control the output based on simple function triggers. Each byte is encoded as follows:
-        -   **Bits 0-5:** The function number (0-63).
-        -   **Bits 6-7:** The direction rule:
-            -   `00` (value + 0): Activates in any direction.
-            -   `01` (value + 64): Activates in **forward** only.
-            -   `10` (value + 128): Activates in **reverse** only.
-            -   `11` (value + 192): **Blocks** the output.
-    -   **Bytes 5-8:** These four bytes form two pairs. Each pair can define a high-number function or a binary state that can also control the output.
+
+#### Control Byte Encoding Table
+
+Each byte contains both the function number and its rule (Direction or Blocking). Add the **Base Value** for the rule to the **Function Number** to get the final CV value.
+
+| Rule | Base Value | Valid Range | Description |
+| :--- | :--- | :--- | :--- |
+| **Multi-Direction** | **0** | 0 - 63 | Function activates the output in **Any** direction. |
+| **Forward Only** | **64** | 64 - 127 | Function activates the output in **Forward** only. |
+| **Reverse Only** | **128** | 128 - 191 | Function activates the output in **Reverse** only. |
+| **Blocking** | **192** | 192 - 255 | Function **Blocks** the output (Any direction). |
+
+**Bytes 1-4:** Primary triggers using the encoding above.
+**Bytes 5-8:** Extended triggers (pairs of bytes for high function numbers/binary states).
 
 #### Example:
 
@@ -197,16 +236,16 @@ Logic:
 
 **Configuration for Output 1 (Front White Light):**
 -   CVs start at 257.
--   **Condition 1:** F0, Forward Only. Value = `0 + 64 = 64`.
--   **Condition 2:** F6, Any Direction. Value = `6 + 0 = 6`.
--   **Condition 3:** F1, Blocking. Value = `1 + 192 = 193`.
+-   **Condition 1:** F0, Forward Only. Base 64 + Func 0 = **64**.
+-   **Condition 2:** F6, Any Direction. Base 0 + Func 6 = **6**.
+-   **Condition 3:** F1, Blocking. Base 192 + Func 1 = **193**.
 -   **Program:** CV 257 = 64, CV 258 = 6, CV 259 = 193, CV 260-264 = 255.
 
 **Configuration for Output 2 (Rear Red Light):**
 -   CVs start at `257 + 8 = 265`.
--   **Condition 1:** F0, Forward Only. Value = `0 + 64 = 64`.
--   **Condition 2:** F6, Any Direction. Value = `6 + 0 = 6`.
--   **Condition 3:** F2, Blocking. Value = `2 + 192 = 194`.
+-   **Condition 1:** F0, Forward Only. Base 64 + Func 0 = **64**.
+-   **Condition 2:** F6, Any Direction. Base 0 + Func 6 = **6**.
+-   **Condition 3:** F2, Blocking. Base 192 + Func 2 = **194**.
 -   **Program:** CV 265 = 64, CV 266 = 6, CV 267 = 194, CV 268-272 = 255.
 
 ---
@@ -218,8 +257,22 @@ Beyond simply turning outputs on and off, this library allows you to configure a
 ### How it Works
 
 1.  **Access the Indexed CVs:** Program **CV 31 = 0** and **CV 32 = 50**.
-2.  **Configure:** The memory block is organized into 8-byte chunks, with one chunk for each of the 24 physical outputs. To find the starting CV for a specific output, use this formula:
-    `base_cv = 257 + ( (output_number - 1) * 8 )`
+2.  **Configure:** The memory block is organized into 8-byte chunks, with one chunk for each of the 24 physical outputs.
+
+#### Quick Reference: Output Base CVs
+
+Use this table to quickly find the starting CV for any output.
+
+| Output | Base CV | Output | Base CV | Output | Base CV |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| **1** | 257 | **9** | 321 | **17** | 385 |
+| **2** | 265 | **10** | 329 | **18** | 393 |
+| **3** | 273 | **11** | 337 | **19** | 401 |
+| **4** | 281 | **12** | 345 | **20** | 409 |
+| **5** | 289 | **13** | 353 | **21** | 417 |
+| **6** | 297 | **14** | 361 | **22** | 425 |
+| **7** | 305 | **15** | 369 | **23** | 433 |
+| **8** | 313 | **16** | 377 | **24** | 441 |
 
 Within each 8-byte block, the CVs have the following roles:
 
@@ -254,7 +307,7 @@ Here is a list of the available effect types and the parameters they use.
 Let's say you want to add a strobe light to your locomotive on **Output 6**. You want it to flash at **5 Hz** with a **30% duty cycle** and full brightness.
 
 1.  **Access the Effects Block:** Program **CV 31 = 0**, **CV 32 = 50**.
-2.  **Calculate Base CV:** For Output 6, the base CV is `257 + ((6 - 1) * 8) = 257 + 40 = 297`.
+2.  **Calculate Base CV:** Looking at the *Quick Reference* table, the Base CV for Output 6 is **297**.
 3.  **Program the Effect CVs:**
     -   **CV 297 (Effect Type):** The ID for Strobe is **3**.
     -   **CV 298 (Param 1 LSB):** The frequency is 5 Hz. Since this is less than 256, the LSB is **5** and the MSB is 0.

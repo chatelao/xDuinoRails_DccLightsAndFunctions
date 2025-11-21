@@ -6,6 +6,8 @@
 #define XDRAILS_DCC_LIGHTS_AND_FUNCTIONS_MAIN_H
 
 #include <Arduino.h>
+#undef min
+#undef max
 #include <vector>
 #include <map>
 #include <cstdint>
