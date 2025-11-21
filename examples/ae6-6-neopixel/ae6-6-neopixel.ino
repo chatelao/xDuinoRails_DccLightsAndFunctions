@@ -1,6 +1,7 @@
 #include <xDuinoRails_DccLightsAndFunctions.h>
 #include <LightSources/NeopixelRgbMulti.h>
 #include <LightSources/NeopixelRgbMultiSwissAe66.h>
+#include <cv_definitions.h>
 #include <interfaces/ICVAccess.h>
 #include <map>
 
