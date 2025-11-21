@@ -121,6 +121,13 @@ public:
      */
     LogicalFunction* getLogicalFunction(size_t index);
 
+    /**
+     * @brief Gets a const pointer to a logical function by its index.
+     * @param index The index of the logical function.
+     * @return A const pointer to the LogicalFunction, or nullptr if not found.
+     */
+    const LogicalFunction* getLogicalFunction(size_t index) const;
+
 #ifdef UNIT_TEST
 public:
 #endif

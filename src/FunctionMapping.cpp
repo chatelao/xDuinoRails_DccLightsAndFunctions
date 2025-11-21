@@ -1,5 +1,5 @@
 #include "FunctionMapping.h"
-#include "AuxController.h"
+#include "xDuinoRails_DccLightsAndFunctions.h"
 
 namespace xDuinoRails {
 
@@ -18,6 +18,12 @@ bool ConditionVariable::evaluate(const AuxController& controller) const {
                 break;
             case TriggerSource::BINARY_STATE:
                 if (cond.comparator == TriggerComparator::IS_TRUE) result = controller.getBinaryState(cond.parameter);
+                break;
+            case TriggerSource::LOGICAL_FUNC_STATE:
+                if (cond.comparator == TriggerComparator::IS_TRUE) {
+                    const LogicalFunction* lf = controller.getLogicalFunction(cond.parameter);
+                    result = (lf != nullptr && lf->isActive());
+                }
                 break;
             default: break;
         }

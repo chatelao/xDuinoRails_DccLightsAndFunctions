@@ -34,8 +34,8 @@ void AuxController::addLightSource(std::unique_ptr<LightSource> lightSource) {
 
 void AuxController::update(uint32_t delta_ms) {
     if (_state_changed) {
-        evaluateMapping();
         _state_changed = false;
+        evaluateMapping();
     }
     for (auto& func : _logical_functions) {
         func->update(delta_ms);
@@ -126,6 +126,10 @@ LogicalFunction* AuxController::getLogicalFunction(size_t index) {
     return (index < _logical_functions.size()) ? _logical_functions[index] : nullptr;
 }
 
+const LogicalFunction* AuxController::getLogicalFunction(size_t index) const {
+    return (index < _logical_functions.size()) ? _logical_functions[index] : nullptr;
+}
+
 void AuxController::addLogicalFunction(LogicalFunction* function) {
     _logical_functions.push_back(function);
 }
@@ -160,11 +164,15 @@ void AuxController::evaluateMapping() {
         if (rule.evaluate(*this)) {
             if (rule.target_logical_function_id < _logical_functions.size()) {
                 LogicalFunction* target_func = _logical_functions[rule.target_logical_function_id];
+                bool was_active = target_func->isActive();
                 switch (rule.action) {
                     case MappingAction::ACTIVATE: target_func->setActive(true); break;
                     case MappingAction::DEACTIVATE: target_func->setActive(false); break;
                     case MappingAction::SET_DIMMED: target_func->setDimmed(!target_func->isDimmed()); break;
                     default: break;
+                }
+                if (target_func->isActive() != was_active) {
+                    _state_changed = true;
                 }
             }
         }
