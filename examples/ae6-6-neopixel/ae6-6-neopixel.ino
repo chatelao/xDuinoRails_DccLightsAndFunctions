@@ -2,10 +2,10 @@
 #undef min
 #undef max
 
-// Include FastLED first to define placement new and guards
-#include <FastLED.h>
+// Include the compatibility header which handles FastLED/ArduinoSTL conflicts
+// and provides unique_ptr polyfills.
+#include <compat/ArduinoSTL_AVR_Compat.h>
 
-#include <ArduinoSTL.h>
 #include <Servo.h>
 #include <Adafruit_NeoPixel.h>
 

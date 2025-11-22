@@ -7,12 +7,47 @@
 #undef min
 #undef max
 
-// Include FastLED first so it defines placement new and its guards.
-// This attempts to prevent ArduinoSTL from redefining it.
+// Suppress ArduinoSTL's <new> header to avoid conflict with FastLED's placement new.
+// This macro must be defined before any STL header is included.
+#ifndef _NEW
+#define _NEW
+#endif
+
+// Include FastLED (provides placement new)
 #include <FastLED.h>
 
-// Ensure ArduinoSTL is included
+// Include ArduinoSTL and exception
 #include <ArduinoSTL.h>
+#include <exception>
+
+// Polyfill functionality normally provided by <new>
+namespace std {
+    class bad_alloc : public exception {
+    public:
+        bad_alloc() throw() { }
+        virtual ~bad_alloc() throw() { }
+        virtual const char* what() const throw() { return "bad_alloc"; }
+    };
+
+    struct nothrow_t {};
+    extern const nothrow_t nothrow;
+
+    typedef void (*new_handler)();
+    new_handler set_new_handler(new_handler new_p) throw();
+}
+
+// Declare allocation operators (implemented in ArduinoSTL library)
+void* operator new(size_t size);
+void* operator new[](size_t size);
+void operator delete(void* ptr);
+void operator delete[](void* ptr);
+
+void* operator new(size_t size, const std::nothrow_t&) throw();
+void* operator new[](size_t size, const std::nothrow_t&) throw();
+void operator delete(void* ptr, const std::nothrow_t&) throw();
+void operator delete[](void* ptr, const std::nothrow_t&) throw();
+
+// Include other standard headers needed
 #include <vector>
 #include <map>
 #include <memory>
