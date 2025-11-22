@@ -7,23 +7,9 @@
 #undef min
 #undef max
 
-// Define guards to prevent FastLED from redefining placement new
-// We define multiple variants to catch whatever guard FastLED is using.
-#ifndef __INPLACENEW_H
-#define __INPLACENEW_H
-#endif
-#ifndef INPLACENEW_H
-#define INPLACENEW_H
-#endif
-#ifndef _INPLACENEW_H
-#define _INPLACENEW_H
-#endif
-#ifndef FASTLED_INPLACENEW_H
-#define FASTLED_INPLACENEW_H
-#endif
-#ifndef FL_INPLACENEW_H
-#define FL_INPLACENEW_H
-#endif
+// Include FastLED first so it defines placement new and its guards.
+// This attempts to prevent ArduinoSTL from redefining it.
+#include <FastLED.h>
 
 // Ensure ArduinoSTL is included
 #include <ArduinoSTL.h>

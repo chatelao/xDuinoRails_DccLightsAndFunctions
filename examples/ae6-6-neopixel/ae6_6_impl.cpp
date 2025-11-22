@@ -54,8 +54,10 @@ void ae6_6_setup() {
     auto backLights = std::unique_ptr<NeopixelRgbMultiSwissAe66>(new NeopixelRgbMultiSwissAe66(BACK_LIGHT_PIN, 3, 255, 0, 0));
 
     // Add the light sources to the controller. They get assigned output IDs 0 and 1.
-    controller.addLightSource(std::move(frontLights));
-    controller.addLightSource(std::move(backLights));
+    // Note: On AVR with ArduinoSTL, std::move might be broken (returning lvalue ref).
+    // We use static_cast to ensure rvalue reference binding.
+    controller.addLightSource(static_cast<std::unique_ptr<NeopixelRgbMulti>&&>(frontLights));
+    controller.addLightSource(static_cast<std::unique_ptr<NeopixelRgbMultiSwissAe66>&&>(backLights));
 
     // Create a mock CV access object and configure it
     MockCVAccess cvAccess;
