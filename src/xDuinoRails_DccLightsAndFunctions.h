@@ -12,6 +12,7 @@
 #include <map>
 #include <cstdint>
 #include <memory>
+#include "compat/ArduinoSTL_AVR_Compat.h"
 #include "interfaces/ICVAccess.h"
 #include "LightSources/LightSource.h"
 #include "PhysicalOutput.h"

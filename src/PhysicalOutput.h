@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <memory>
+#include "compat/ArduinoSTL_AVR_Compat.h"
 #include <Servo.h>
 #include "LightSources/LightSource.h"
 
