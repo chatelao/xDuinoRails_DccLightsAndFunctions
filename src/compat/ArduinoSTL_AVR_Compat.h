@@ -8,9 +8,21 @@
 #undef max
 
 // Define guards to prevent FastLED from redefining placement new
-// This assumes FastLED uses __INPLACENEW_H as the guard, which is standard for this file.
+// We define multiple variants to catch whatever guard FastLED is using.
 #ifndef __INPLACENEW_H
 #define __INPLACENEW_H
+#endif
+#ifndef INPLACENEW_H
+#define INPLACENEW_H
+#endif
+#ifndef _INPLACENEW_H
+#define _INPLACENEW_H
+#endif
+#ifndef FASTLED_INPLACENEW_H
+#define FASTLED_INPLACENEW_H
+#endif
+#ifndef FL_INPLACENEW_H
+#define FL_INPLACENEW_H
 #endif
 
 // Ensure ArduinoSTL is included
@@ -45,10 +57,21 @@ namespace std {
         // Move constructor
         unique_ptr(unique_ptr&& u) : _ptr(u.release()) {}
 
+        // Converting move constructor (Derived -> Base)
+        template<typename U, typename E>
+        unique_ptr(unique_ptr<U, E>&& u) : _ptr(u.release()) {}
+
         ~unique_ptr() { reset(); }
 
         // Move assignment
         unique_ptr& operator=(unique_ptr&& u) {
+            reset(u.release());
+            return *this;
+        }
+
+        // Converting move assignment
+        template<typename U, typename E>
+        unique_ptr& operator=(unique_ptr<U, E>&& u) {
             reset(u.release());
             return *this;
         }
