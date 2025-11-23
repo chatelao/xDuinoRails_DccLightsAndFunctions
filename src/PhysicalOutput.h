@@ -2,6 +2,7 @@
 #define PHYSICALOUTPUT_H
 
 #include <cstdint>
+#include "compat/ArduinoSTL_AVR_Compat.h"
 #include <memory>
 #include <Servo.h>
 #include "LightSources/LightSource.h"

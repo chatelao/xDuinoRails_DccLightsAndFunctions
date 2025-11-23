@@ -8,6 +8,7 @@
 #include <Arduino.h>
 #undef min
 #undef max
+#include "compat/ArduinoSTL_AVR_Compat.h"
 #include <vector>
 #include <map>
 #include <cstdint>
