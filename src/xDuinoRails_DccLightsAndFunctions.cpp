@@ -391,6 +391,8 @@ Effect* AuxController::createEffectFromCVs(ICVAccess& cvAccess, uint8_t output_n
             return new EffectServo(p1 & 0xFF, p2 & 0xFF, p3 & 0xFF);
         case EFFECT_TYPE_SMOKE_GENERATOR:
             return new EffectSmokeGenerator((p1 & 0xFF) > 0, p2 & 0xFF);
+        case EFFECT_TYPE_FIRE:
+            return new EffectFire(p1 & 0xFF, p2 & 0xFF, p3 & 0xFF);
         case EFFECT_TYPE_NONE:
         default:
             return new EffectSteady(255);
