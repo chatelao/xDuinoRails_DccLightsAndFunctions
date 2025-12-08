@@ -3,17 +3,12 @@
 
 #if defined(ARDUINO_ARCH_AVR)
 
-// Suppress ArduinoSTL's <new> definition to avoid conflicts with FastLED
-#ifndef _NEW
-#define _NEW
-#endif
-
 #include <Arduino.h>
 #undef min
 #undef max
 
 // Remove <type_traits>, <utility>, <exception> as they are often missing or cause conflicts.
-// We implement a standalone polyfill.
+// We assume ArduinoSTL is present and provides basic types, or we provide minimal traits.
 
 namespace xDuinoRails {
 namespace internal {
@@ -38,26 +33,9 @@ namespace internal {
 }
 }
 
-namespace std {
-    struct nothrow_t {};
-    extern const nothrow_t nothrow;
-
-    // Polyfill bad_alloc. We do not inherit from std::exception because <exception> might be missing.
-    // If exceptions are used, this might be caught as a generic object or not match exception&.
-    // However, on AVR without STL, exceptions are rarely used/enabled.
-    class bad_alloc {
-    public:
-        virtual const char* what() const throw() {
-            return "bad_alloc";
-        }
-    };
-}
-
-// Standard placement new
-inline void* operator new(size_t, void* ptr) throw() { return ptr; }
-inline void operator delete(void*, void*) throw() {}
-
 // Polyfill std::unique_ptr for AVR
+// We do NOT polyfill bad_alloc or operator new/delete because ArduinoSTL provides them.
+
 namespace std {
     template<typename T>
     struct default_delete {

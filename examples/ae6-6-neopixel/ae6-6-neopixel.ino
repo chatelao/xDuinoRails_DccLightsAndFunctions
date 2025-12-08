@@ -1,4 +1,3 @@
-#define _NEW
 #include <ArduinoSTL.h>
 #include <Servo.h>
 #include <Adafruit_NeoPixel.h>
