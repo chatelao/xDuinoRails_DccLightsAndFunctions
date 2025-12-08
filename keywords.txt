@@ -25,6 +25,8 @@ EffectServo	KEYWORD1
 EffectSmokeGenerator	KEYWORD1
 EffectFire	KEYWORD1
 ICVAccess	KEYWORD1
+NeopixelRgbMulti	KEYWORD1
+NeopixelRgbMultiSwissAe66	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
