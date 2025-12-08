@@ -17,13 +17,34 @@ This powerful and flexible library is designed for model railroad hobbyists and 
 *   **Servo Control:** Drive servo motors for animations.
 *   **Extensible:** The library is designed to be easily extensible with new light sources and effects.
 
+## Installation
+
+### Arduino IDE
+1. Download the repository as a ZIP file.
+2. In the Arduino IDE, go to **Sketch > Include Library > Add .ZIP Library**.
+3. Select the downloaded ZIP file.
+
+### PlatformIO
+Add the following to your `platformio.ini`:
+```ini
+lib_deps =
+    xDuinoRails_DccLightsAndFunctions
+```
+
+### Dependencies
+This library requires the following dependencies:
+*   [Servo](https://www.arduino.cc/reference/en/libraries/servo/)
+*   [Adafruit NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel)
+*   [FastLED](https://github.com/FastLED/FastLED)
+*   [ArduinoSTL](https://github.com/mike-matera/ArduinoSTL) (Required for AVR)
+
 ## Getting Started
 
 To learn how to use this library and configure its many features, please refer to the detailed **[User Manual](docs/USER_MANUAL.md)**.
 
 ## Contributing
 
-Contributions are welcome! If you would like to contribute to the development of this library, please feel free to fork the repository and submit a pull request.
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to this project.
 
 ## License
 

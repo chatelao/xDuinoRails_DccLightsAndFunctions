@@ -1,0 +1,76 @@
+#######################################
+# Syntax Coloring Map For xDuinoRails
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+AuxController	KEYWORD1
+PhysicalOutput	KEYWORD1
+LightSource	KEYWORD1
+LogicalFunction	KEYWORD1
+FunctionMapping	KEYWORD1
+Condition	KEYWORD1
+ConditionVariable	KEYWORD1
+MappingRule	KEYWORD1
+Effect	KEYWORD1
+EffectSteady	KEYWORD1
+EffectDimming	KEYWORD1
+EffectFlicker	KEYWORD1
+EffectStrobe	KEYWORD1
+EffectMarsLight	KEYWORD1
+EffectSoftStartStop	KEYWORD1
+EffectServo	KEYWORD1
+EffectSmokeGenerator	KEYWORD1
+EffectFire	KEYWORD1
+ICVAccess	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+addPhysicalOutput	KEYWORD2
+addLightSource	KEYWORD2
+update	KEYWORD2
+loadFromCVs	KEYWORD2
+setFunctionState	KEYWORD2
+setDirection	KEYWORD2
+setSpeed	KEYWORD2
+setBinaryState	KEYWORD2
+getFunctionState	KEYWORD2
+getDirection	KEYWORD2
+getSpeed	KEYWORD2
+getConditionVariableState	KEYWORD2
+getBinaryState	KEYWORD2
+getLogicalFunction	KEYWORD2
+begin	KEYWORD2
+on	KEYWORD2
+off	KEYWORD2
+setLevel	KEYWORD2
+setValue	KEYWORD2
+setServoAngle	KEYWORD2
+addOutput	KEYWORD2
+setActive	KEYWORD2
+isActive	KEYWORD2
+setDimmed	KEYWORD2
+isDimmed	KEYWORD2
+readCV	KEYWORD2
+writeCV	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+DECODER_DIRECTION_REVERSE	LITERAL1
+DECODER_DIRECTION_FORWARD	LITERAL1
+LIGHT_SOURCE	LITERAL1
+SERVO	LITERAL1
+EFFECT_TYPE_NONE	LITERAL1
+EFFECT_TYPE_DIMMING	LITERAL1
+EFFECT_TYPE_FLICKER	LITERAL1
+EFFECT_TYPE_STROBE	LITERAL1
+EFFECT_TYPE_MARS_LIGHT	LITERAL1
+EFFECT_TYPE_SOFT_START_STOP	LITERAL1
+EFFECT_TYPE_SERVO	LITERAL1
+EFFECT_TYPE_SMOKE_GENERATOR	LITERAL1
