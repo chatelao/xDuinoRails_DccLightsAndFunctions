@@ -12,13 +12,40 @@
 #undef min
 #undef max
 
-#include <type_traits>
+// Remove <type_traits> as it is often missing in AVR STL ports (uClibc++).
+// We include <utility> and <exception> hoping they exist for pair and exception base.
 #include <utility>
 #include <exception>
+
+namespace xDuinoRails {
+namespace internal {
+    // Polyfill for type_traits helpers needed for move/forward
+    template<class T> struct remove_reference { typedef T type; };
+    template<class T> struct remove_reference<T&> { typedef T type; };
+    template<class T> struct remove_reference<T&&> { typedef T type; };
+
+    template<typename T>
+    constexpr T&& forward(typename remove_reference<T>::type& t) noexcept {
+        return static_cast<T&&>(t);
+    }
+    template<typename T>
+    constexpr T&& forward(typename remove_reference<T>::type&& t) noexcept {
+        return static_cast<T&&>(t);
+    }
+
+    template<typename T>
+    constexpr typename remove_reference<T>::type&& move(T&& t) noexcept {
+        return static_cast<typename remove_reference<T>::type&&>(t);
+    }
+}
+}
 
 namespace std {
     struct nothrow_t {};
     extern const nothrow_t nothrow;
+
+    // Polyfill bad_alloc if not provided (ArduinoSTL usually provides exception but maybe not bad_alloc)
+    // We assume std::exception is available via <exception>
     class bad_alloc : public exception {
     public:
         virtual const char* what() const throw() {
@@ -105,7 +132,7 @@ namespace std {
 
     template<typename T, typename... Args>
     unique_ptr<T> make_unique(Args&&... args) {
-        return unique_ptr<T>(new T(std::forward<Args>(args)...));
+        return unique_ptr<T>(new T(xDuinoRails::internal::forward<Args>(args)...));
     }
 }
 
