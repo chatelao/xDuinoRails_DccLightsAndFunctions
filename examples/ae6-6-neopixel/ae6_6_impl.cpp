@@ -7,7 +7,9 @@
 #include <cv_definitions.h>
 #include <interfaces/ICVAccess.h>
 #include <map>
+#ifndef ARDUINO_ARCH_AVR
 #include <memory>
+#endif
 #include <vector>
 #include "ae6_6_impl.h"
 

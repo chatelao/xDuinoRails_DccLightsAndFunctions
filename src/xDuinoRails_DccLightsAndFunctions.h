@@ -12,7 +12,9 @@
 #include <vector>
 #include <map>
 #include <cstdint>
+#ifndef ARDUINO_ARCH_AVR
 #include <memory>
+#endif
 #include "interfaces/ICVAccess.h"
 #include "LightSources/LightSource.h"
 #include "PhysicalOutput.h"

@@ -2,9 +2,13 @@
 #define PHYSICALOUTPUT_H
 
 #include <cstdint>
-#include <memory>
 #include <Servo.h>
 #include "LightSources/LightSource.h"
+#include "compat/ArduinoSTL_AVR_Compat.h"
+
+#ifndef ARDUINO_ARCH_AVR
+#include <memory>
+#endif
 
 namespace xDuinoRails {
 
