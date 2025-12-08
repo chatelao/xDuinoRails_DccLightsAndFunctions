@@ -12,10 +12,8 @@
 #undef min
 #undef max
 
-// Remove <type_traits> as it is often missing in AVR STL ports (uClibc++).
-// We include <utility> and <exception> hoping they exist for pair and exception base.
-#include <utility>
-#include <exception>
+// Remove <type_traits>, <utility>, <exception> as they are often missing or cause conflicts.
+// We implement a standalone polyfill.
 
 namespace xDuinoRails {
 namespace internal {
@@ -44,9 +42,10 @@ namespace std {
     struct nothrow_t {};
     extern const nothrow_t nothrow;
 
-    // Polyfill bad_alloc if not provided (ArduinoSTL usually provides exception but maybe not bad_alloc)
-    // We assume std::exception is available via <exception>
-    class bad_alloc : public exception {
+    // Polyfill bad_alloc. We do not inherit from std::exception because <exception> might be missing.
+    // If exceptions are used, this might be caught as a generic object or not match exception&.
+    // However, on AVR without STL, exceptions are rarely used/enabled.
+    class bad_alloc {
     public:
         virtual const char* what() const throw() {
             return "bad_alloc";
