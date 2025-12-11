@@ -1,5 +1,3 @@
-#define __INPLACENEW_H
-#define __INPLACENEW_H__
 #include <ArduinoSTL.h>
 #include <Servo.h>
 #include <Adafruit_NeoPixel.h>

@@ -4,6 +4,18 @@
 #include "../PhysicalOutput.h"
 #include <vector>
 #include <cstdint>
+
+// Compatibility fix for AVR using ArduinoSTL + FastLED
+// Prevents FastLED from defining operator new by tricking it into using shared/new.h
+#if defined(__AVR__)
+#  define XD_TMP_AVR_WAS_DEFINED
+#  undef __AVR__
+// Force FastLED to use the shared new implementation which checks for <new>
+#  include <platforms/new.h>
+#  define __AVR__
+#  undef XD_TMP_AVR_WAS_DEFINED
+#endif
+
 #include <FastLED.h>
 
 namespace xDuinoRails {
