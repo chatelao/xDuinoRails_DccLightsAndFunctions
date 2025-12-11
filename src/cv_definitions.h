@@ -130,6 +130,7 @@
 #define EFFECT_TYPE_SOFT_START_STOP   5 // Soft start/stop fade effect
 #define EFFECT_TYPE_SERVO             6 // Servo control
 #define EFFECT_TYPE_SMOKE_GENERATOR   7 // Smoke generator control
+#define EFFECT_TYPE_FIRE              8 // Fire effect
 
 /*
 Parameter Mapping for each Effect Type:

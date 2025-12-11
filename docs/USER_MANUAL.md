@@ -301,6 +301,7 @@ Here is a list of the available effect types and the parameters they use.
 | **Soft Start**  | 5       | Fade-In Time (ms)        | Fade-Out Time (ms)       | Target Brightness (0-255)|
 | **Servo**       | 6       | Endpoint A (angle)       | Endpoint B (angle)       | Travel Speed (1-255)     |
 | **Smoke Gen.**  | 7       | Heater (0=off, 1=on)     | Fan Speed (0-255)        | (Unused)                 |
+| **Fire**        | 8       | Cooling (0-255)          | Sparking (0-255)         | Length (pixels)          |
 
 ### Example: Configuring a Strobe Light on Output 6
 
