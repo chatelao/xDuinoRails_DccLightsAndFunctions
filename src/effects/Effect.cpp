@@ -3,8 +3,9 @@
 #include <algorithm>
 #include <cstring>
 
-// FastLED math is used here. Since we might be in a mock environment,
-// we rely on the FastLED headers being present or mocked appropriately.
+// FastLED math functions (random8, etc.) are likely in the FastLED namespace
+// in recent versions (which this project uses, given the STL conflict).
+using namespace FastLED;
 
 namespace xDuinoRails {
 
