@@ -4,7 +4,10 @@
 #include "../PhysicalOutput.h"
 #include <vector>
 #include <cstdint>
-#include <FastLED.h>
+// Replaced FastLED.h with safe includes to avoid placement new conflict
+#include <fastled_config.h>
+#include <led_sysdefs.h>
+#include <lib8tion.h>
 
 namespace xDuinoRails {
 
