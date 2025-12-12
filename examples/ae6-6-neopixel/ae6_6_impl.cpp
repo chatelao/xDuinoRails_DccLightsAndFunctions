@@ -1,6 +1,21 @@
 #include <Arduino.h>
 #undef min
 #undef max
+
+#include <ArduinoSTL.h>
+#include <Servo.h>
+#include <Adafruit_NeoPixel.h>
+
+// Fix for conflict between ArduinoSTL and FastLED regarding placement new
+#ifndef __INPLACENEW_H
+#define __INPLACENEW_H
+#endif
+#ifndef __INPLACENEW_H__
+#define __INPLACENEW_H__
+#endif
+
+#include <FastLED.h>
+
 #include <xDuinoRails_DccLightsAndFunctions.h>
 #include <LightSources/NeopixelRgbMulti.h>
 #include <LightSources/NeopixelRgbMultiSwissAe66.h>
