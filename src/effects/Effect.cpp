@@ -269,11 +269,13 @@ EffectFire::EffectFire(uint8_t cooling, uint8_t sparking, uint8_t length)
     : _cooling(cooling), _sparking(sparking), _length(length) {
     if (_length == 0) _length = 1;
     // Allocate virtual heat array
+    // Uses the global new operator we defined in Compat header (malloc wrapper)
     _heat = new uint8_t[_length];
     memset(_heat, 0, _length);
 }
 
 EffectFire::~EffectFire() {
+    // Uses the global delete operator we defined in Compat header (free wrapper)
     delete[] _heat;
 }
 

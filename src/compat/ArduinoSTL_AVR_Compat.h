@@ -5,90 +5,109 @@
 
 #if defined(ARDUINO_ARCH_AVR)
 
-    // Suppress ArduinoSTL's definition of operator new/delete
-    // Even if this doesn't fully work for placement new (as seen in some environments),
-    // it's good practice to attempt it for standard compliance if possible.
+    // =========================================================================
+    // COMPATIBILITY STRATEGY: "Let FastLED Win"
+    // =========================================================================
+    // 1. Include FastLED first. Let it define its placement new.
+    #include <FastLED.h>
+
+    // Clean up macros that might hurt STL
+    #ifdef min
+    #undef min
+    #endif
+    #ifdef max
+    #undef max
+    #endif
+
+    // 2. FORCE suppression of ArduinoSTL's placement new
+    // FastLED defines it, so we must prevent ArduinoSTL from defining it.
+    // ArduinoSTL (uClibc++) typically checks __INPLACENEW_H or __INPLACENEW_H__
+    // We define ALL known variations to be safe.
+    #ifndef __INPLACENEW_H
+    #define __INPLACENEW_H
+    #endif
+    #ifndef __INPLACENEW_H__
+    #define __INPLACENEW_H__
+    #endif
+    #ifndef _INPLACENEW_H_
+    #define _INPLACENEW_H_
+    #endif
+    #ifndef INPLACENEW_H
+    #define INPLACENEW_H
+    #endif
+
+    // 3. Suppress ArduinoSTL's definition of GLOBAL operator new/delete
+    // We will provide our own malloc-based implementation below.
     #ifndef _UCXX_NEW
     #define _UCXX_NEW
     #endif
 
-    // Suppress FastLED's definition of placement new
-    // We define all common guards used by different FastLED versions
-    #ifndef __INPLACENEW_H
-    #define __INPLACENEW_H 1
-    #endif
-    #ifndef __INPLACENEW_H__
-    #define __INPLACENEW_H__ 1
-    #endif
-    #ifndef FASTLED_INPLACENEW_H
-    #define FASTLED_INPLACENEW_H 1
-    #endif
-    #ifndef _INPLACENEW_H_
-    #define _INPLACENEW_H_ 1
-    #endif
-    #ifndef INPLACENEW_H
-    #define INPLACENEW_H 1
-    #endif
-
+    // 4. Include ArduinoSTL
     #include <ArduinoSTL.h>
-    #include <stdlib.h> // for malloc/free
 
-    // We must manually provide what we suppressed from <new> and what FastLED would have provided
-
-    // 1. bad_alloc (needed by vector)
-    // Provided by ArduinoSTL headers (likely via internal includes in memory/exception)
-    // We omit it here to avoid redefinition errors.
+    // Ensure std::bad_alloc is available (usually in <exception>)
     #include <exception>
 
-    // 2. Global new/delete
-    // We define these to ensure we have simple malloc/free wrappers
-    // and to potentially override library implementations if they are weak.
-    inline void* operator new(size_t size) { return malloc(size); }
-    inline void* operator new[](size_t size) { return malloc(size); }
-    inline void operator delete(void* ptr) { free(ptr); }
-    inline void operator delete[](void* ptr) { free(ptr); }
+    // 5. Global new/delete implementation (malloc wrappers)
+    #include <stdlib.h>
 
-    // 3. Placement new/delete
-    // We rely on ArduinoSTL to provide these now, as suppressing them proved difficult.
-    // By keeping the FastLED suppression guards above, we ensure FastLED doesn't conflict.
+    inline void* operator new(size_t size) {
+        void* ptr = malloc(size);
+        if (!ptr) {
+            return NULL;
+        }
+        return ptr;
+    }
 
-    // 4. unique_ptr polyfill (ArduinoSTL 1.3.3 lacks it)
+    inline void* operator new[](size_t size) {
+        return malloc(size);
+    }
+
+    inline void operator delete(void* ptr) {
+        if (ptr) free(ptr);
+    }
+
+    inline void operator delete[](void* ptr) {
+        if (ptr) free(ptr);
+    }
+
+    // Note: We DO NOT define placement new here.
+    // FastLED has already defined it.
+
+    // 6. Polyfill std::unique_ptr for C++11 on AVR (ArduinoSTL 1.3.3 misses this)
     namespace std {
-        template<typename T>
-        class unique_ptr {
-            T* ptr;
-        public:
-            explicit unique_ptr(T* p = nullptr) : ptr(p) {}
-            ~unique_ptr() { delete ptr; }
-            unique_ptr(unique_ptr&& other) : ptr(other.ptr) { other.ptr = nullptr; }
-            unique_ptr& operator=(unique_ptr&& other) {
-                if (this != &other) {
-                    delete ptr;
-                    ptr = other.ptr;
-                    other.ptr = nullptr;
-                }
-                return *this;
-            }
-            // Disable copy
-            unique_ptr(const unique_ptr&) = delete;
-            unique_ptr& operator=(const unique_ptr&) = delete;
-
-            T* get() const { return ptr; }
-            T& operator*() const { return *ptr; }
-            T* operator->() const { return ptr; }
-            T* release() { T* p = ptr; ptr = nullptr; return p; }
-            void reset(T* p = nullptr) { delete ptr; ptr = p; }
-            explicit operator bool() const { return ptr != nullptr; }
+        template<class T> struct _Unique_if {
+            typedef unique_ptr<T> _Single_object;
         };
 
-        template<typename T, typename... Args>
-        unique_ptr<T> make_unique(Args&&... args) {
+        template<class T> struct _Unique_if<T[]> {
+            typedef unique_ptr<T[]> _Unknown_bound;
+        };
+
+        template<class T, size_t N> struct _Unique_if<T[N]> {
+            typedef void _Known_bound;
+        };
+
+        template<class T, class... Args>
+        typename _Unique_if<T>::_Single_object
+        make_unique(Args&&... args) {
             return unique_ptr<T>(new T(static_cast<Args&&>(args)...));
         }
+
+        template<class T>
+        typename _Unique_if<T>::_Unknown_bound
+        make_unique(size_t n) {
+            typedef typename remove_extent<T>::type U;
+            return unique_ptr<T>(new U[n]());
+        }
+
+        template<class T, class... Args>
+        typename _Unique_if<T>::_Known_bound
+        make_unique(Args&&...) = delete;
     }
 
 #else
-    // Non-AVR
+    // Non-AVR Platforms (e.g. ESP32, Desktop)
     #include <memory>
 #endif
 
