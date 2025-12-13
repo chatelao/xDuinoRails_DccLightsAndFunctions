@@ -8,11 +8,14 @@
 #include <Arduino.h>
 #undef min
 #undef max
+
+// Use compat header for memory management (unique_ptr) on AVR.
+// MUST be included before any STL headers to ensure environment patching (suppression of ArduinoSTL new).
+#include "compat/ArduinoSTL_AVR_Compat.h"
+
 #include <vector>
 #include <map>
 #include <cstdint>
-// Use compat header for memory management (unique_ptr) on AVR
-#include "compat/ArduinoSTL_AVR_Compat.h"
 #include "interfaces/ICVAccess.h"
 #include "LightSources/LightSource.h"
 #include "PhysicalOutput.h"

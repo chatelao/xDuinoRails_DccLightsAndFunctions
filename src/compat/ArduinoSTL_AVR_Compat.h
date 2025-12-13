@@ -5,13 +5,34 @@
 
 #if defined(ARDUINO_ARCH_AVR)
 
-    // Suppress ArduinoSTL's definition of operator new/delete (conflicts with FastLED)
+    // Suppress ArduinoSTL's definition of operator new/delete
+    #ifndef _UCXX_NEW
     #define _UCXX_NEW
+    #endif
+
+    // Suppress FastLED's definition of placement new
+    // We define all common guards used by different FastLED versions
+    #ifndef __INPLACENEW_H
+    #define __INPLACENEW_H 1
+    #endif
+    #ifndef __INPLACENEW_H__
+    #define __INPLACENEW_H__ 1
+    #endif
+    #ifndef FASTLED_INPLACENEW_H
+    #define FASTLED_INPLACENEW_H 1
+    #endif
+    #ifndef _INPLACENEW_H_
+    #define _INPLACENEW_H_ 1
+    #endif
+    #ifndef INPLACENEW_H
+    #define INPLACENEW_H 1
+    #endif
 
     #include <ArduinoSTL.h>
 
-    // We must manually provide what we suppressed from <new>
-    // 1. bad_alloc
+    // We must manually provide what we suppressed from <new> and what FastLED would have provided
+
+    // 1. bad_alloc (needed by vector)
     #include <exception>
     namespace std {
         class bad_alloc : public exception {
@@ -22,13 +43,19 @@
         extern const nothrow_t nothrow;
     }
 
-    // 2. Regular new/delete (FastLED only provides placement new)
+    // 2. Global new/delete
     inline void* operator new(size_t size) { return malloc(size); }
     inline void* operator new[](size_t size) { return malloc(size); }
     inline void operator delete(void* ptr) { free(ptr); }
     inline void operator delete[](void* ptr) { free(ptr); }
 
-    // 3. unique_ptr polyfill (ArduinoSTL lacks it)
+    // 3. Placement new/delete
+    inline void* operator new(size_t size, void* ptr) { return ptr; }
+    inline void* operator new[](size_t size, void* ptr) { return ptr; }
+    inline void operator delete(void* ptr, void* voidptr2) {}
+    inline void operator delete[](void* ptr, void* voidptr2) {}
+
+    // 4. unique_ptr polyfill (ArduinoSTL 1.3.3 lacks it)
     namespace std {
         template<typename T>
         class unique_ptr {
@@ -45,6 +72,7 @@
                 }
                 return *this;
             }
+            // Disable copy
             unique_ptr(const unique_ptr&) = delete;
             unique_ptr& operator=(const unique_ptr&) = delete;
 

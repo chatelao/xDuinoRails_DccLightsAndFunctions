@@ -2,14 +2,8 @@
 #undef min
 #undef max
 
-// Use compat header for STL (includes ArduinoSTL with patches for AVR)
-#include <compat/ArduinoSTL_AVR_Compat.h>
-
 #include <Servo.h>
 #include <Adafruit_NeoPixel.h>
-
-// Include FastLED math functions only via safe header to avoid placement new conflict
-#include <FastLED_Safe.h>
 
 #include <xDuinoRails_DccLightsAndFunctions.h>
 #include <LightSources/NeopixelRgbMulti.h>
