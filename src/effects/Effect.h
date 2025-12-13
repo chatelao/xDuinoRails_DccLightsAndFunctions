@@ -4,10 +4,8 @@
 #include "../PhysicalOutput.h"
 #include <vector>
 #include <cstdint>
-// Replaced FastLED.h with safe includes to avoid placement new conflict
-#include <fastled_config.h>
-#include <led_sysdefs.h>
-#include <lib8tion.h>
+// Use safe FastLED includes to avoid placement new conflict with ArduinoSTL
+#include "../compat/FastLED_Safe.h"
 
 namespace xDuinoRails {
 

@@ -6,11 +6,8 @@
 #include <Servo.h>
 #include <Adafruit_NeoPixel.h>
 
-// Include FastLED math functions only, avoiding the full library which causes
-// placement new conflicts with ArduinoSTL on AVR.
-#include <fastled_config.h>
-#include <led_sysdefs.h>
-#include <lib8tion.h>
+// Include FastLED math functions only via safe header to avoid placement new conflict
+#include <compat/FastLED_Safe.h>
 
 #include <xDuinoRails_DccLightsAndFunctions.h>
 #include <LightSources/NeopixelRgbMulti.h>
