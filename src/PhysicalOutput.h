@@ -2,7 +2,8 @@
 #define PHYSICALOUTPUT_H
 
 #include <cstdint>
-#include <memory>
+// Use compat header for memory management (unique_ptr) on AVR
+#include "compat/ArduinoSTL_AVR_Compat.h"
 #include <Servo.h>
 #include "LightSources/LightSource.h"
 

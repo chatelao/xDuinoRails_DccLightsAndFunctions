@@ -2,6 +2,9 @@
 #undef min
 #undef max
 
+// Include compat header for memory management (unique_ptr) on AVR
+#include <compat/ArduinoSTL_AVR_Compat.h>
+
 #include <ArduinoSTL.h>
 #include <Servo.h>
 #include <Adafruit_NeoPixel.h>
@@ -15,7 +18,6 @@
 #include <cv_definitions.h>
 #include <interfaces/ICVAccess.h>
 #include <map>
-#include <memory>
 #include <vector>
 #include "ae6_6_impl.h"
 

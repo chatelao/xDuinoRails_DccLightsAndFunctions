@@ -11,7 +11,8 @@
 #include <vector>
 #include <map>
 #include <cstdint>
-#include <memory>
+// Use compat header for memory management (unique_ptr) on AVR
+#include "compat/ArduinoSTL_AVR_Compat.h"
 #include "interfaces/ICVAccess.h"
 #include "LightSources/LightSource.h"
 #include "PhysicalOutput.h"
