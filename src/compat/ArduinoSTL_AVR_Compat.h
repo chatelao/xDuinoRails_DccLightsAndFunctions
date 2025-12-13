@@ -6,6 +6,8 @@
 #if defined(ARDUINO_ARCH_AVR)
 
     // Suppress ArduinoSTL's definition of operator new/delete
+    // Even if this doesn't fully work for placement new (as seen in some environments),
+    // it's good practice to attempt it for standard compliance if possible.
     #ifndef _UCXX_NEW
     #define _UCXX_NEW
     #endif
@@ -29,6 +31,7 @@
     #endif
 
     #include <ArduinoSTL.h>
+    #include <stdlib.h> // for malloc/free
 
     // We must manually provide what we suppressed from <new> and what FastLED would have provided
 
@@ -38,16 +41,16 @@
     #include <exception>
 
     // 2. Global new/delete
+    // We define these to ensure we have simple malloc/free wrappers
+    // and to potentially override library implementations if they are weak.
     inline void* operator new(size_t size) { return malloc(size); }
     inline void* operator new[](size_t size) { return malloc(size); }
     inline void operator delete(void* ptr) { free(ptr); }
     inline void operator delete[](void* ptr) { free(ptr); }
 
     // 3. Placement new/delete
-    inline void* operator new(size_t size, void* ptr) { return ptr; }
-    inline void* operator new[](size_t size, void* ptr) { return ptr; }
-    inline void operator delete(void* ptr, void* voidptr2) {}
-    inline void operator delete[](void* ptr, void* voidptr2) {}
+    // We rely on ArduinoSTL to provide these now, as suppressing them proved difficult.
+    // By keeping the FastLED suppression guards above, we ensure FastLED doesn't conflict.
 
     // 4. unique_ptr polyfill (ArduinoSTL 1.3.3 lacks it)
     namespace std {
