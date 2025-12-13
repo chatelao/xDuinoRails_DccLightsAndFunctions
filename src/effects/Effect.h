@@ -5,7 +5,7 @@
 #include <vector>
 #include <cstdint>
 // Use safe FastLED includes to avoid placement new conflict with ArduinoSTL
-#include "../compat/FastLED_Safe.h"
+#include "../FastLED_Safe.h"
 
 namespace xDuinoRails {
 

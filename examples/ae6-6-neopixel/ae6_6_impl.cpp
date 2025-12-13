@@ -7,7 +7,7 @@
 #include <Adafruit_NeoPixel.h>
 
 // Include FastLED math functions only via safe header to avoid placement new conflict
-#include <compat/FastLED_Safe.h>
+#include <FastLED_Safe.h>
 
 #include <xDuinoRails_DccLightsAndFunctions.h>
 #include <LightSources/NeopixelRgbMulti.h>
