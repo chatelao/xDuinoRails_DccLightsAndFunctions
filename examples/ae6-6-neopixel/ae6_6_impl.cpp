@@ -2,10 +2,9 @@
 #undef min
 #undef max
 
-// Include compat header for memory management (unique_ptr) on AVR
+// Use compat header for STL (includes ArduinoSTL with patches for AVR)
 #include <compat/ArduinoSTL_AVR_Compat.h>
 
-#include <ArduinoSTL.h>
 #include <Servo.h>
 #include <Adafruit_NeoPixel.h>
 
