@@ -33,15 +33,9 @@
     // We must manually provide what we suppressed from <new> and what FastLED would have provided
 
     // 1. bad_alloc (needed by vector)
+    // Provided by ArduinoSTL headers (likely via internal includes in memory/exception)
+    // We omit it here to avoid redefinition errors.
     #include <exception>
-    namespace std {
-        class bad_alloc : public exception {
-        public:
-            virtual const char* what() const throw() { return "bad_alloc"; }
-        };
-        struct nothrow_t {};
-        extern const nothrow_t nothrow;
-    }
 
     // 2. Global new/delete
     inline void* operator new(size_t size) { return malloc(size); }
