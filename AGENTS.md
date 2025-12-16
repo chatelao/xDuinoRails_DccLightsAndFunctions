@@ -18,3 +18,7 @@ As defined in `RCN-225`, **CV 96** is used to select which function mapping syst
 While the simpler "per-function" system (RCN-227, Section 2) is implemented, the **"per-output" mapping systems (RCN-227, Section 3) are the primary and recommended methods** for all new configurations due to their greater flexibility.
 
 When working on features related to function mapping, always refer to these two documents to ensure compliance with the established standards.
+
+## Testing
+
+This project does not have a unit test suite. All existing tests have been removed as per user request. Verification relies on compiling the example sketches. Do not add or maintain test cases.
