@@ -1,3 +1,5 @@
+#include <xDuinoRails_DccLightsAndFunctions.h>
+#include <ArduinoSTL.h>
 #include "ae6_6_impl.h"
 
 void setup() {
