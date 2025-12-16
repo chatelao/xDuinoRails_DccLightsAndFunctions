@@ -16,6 +16,8 @@ jobs:
         uses: arduino/compile-sketches@v1
         with:
           fqbn: arduino:avr:uno
+          sketch-paths: |
+            - examples/ae6-6-neopixel
           libraries: |
             - source-path: ./
             - name: Servo
