@@ -11,7 +11,11 @@
 #include <vector>
 #include <map>
 #include <cstdint>
+#ifdef ARDUINO_ARCH_AVR
+#include "compat/ArduinoSTL_AVR_Compat.h"
+#else
 #include <memory>
+#endif
 #include "interfaces/ICVAccess.h"
 #include "LightSources/LightSource.h"
 #include "PhysicalOutput.h"
