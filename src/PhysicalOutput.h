@@ -2,7 +2,6 @@
 #define PHYSICALOUTPUT_H
 
 #include <cstdint>
-#include <memory>
 #include <Servo.h>
 #include "LightSources/LightSource.h"
 
@@ -15,8 +14,18 @@ enum class OutputType {
 
 class PhysicalOutput {
 public:
-    PhysicalOutput(std::unique_ptr<LightSource> lightSource);
+    PhysicalOutput(LightSource* lightSource);
     PhysicalOutput(uint8_t pin); // For Servo
+    ~PhysicalOutput();
+
+    // Add move constructor and assignment operator
+    PhysicalOutput(PhysicalOutput&& other) noexcept;
+    PhysicalOutput& operator=(PhysicalOutput&& other) noexcept;
+
+    // Delete copy constructor and assignment operator
+    PhysicalOutput(const PhysicalOutput&) = delete;
+    PhysicalOutput& operator=(const PhysicalOutput&) = delete;
+
     void begin();
     void setValue(uint8_t value);
     void setServoAngle(uint16_t angle);
@@ -24,7 +33,7 @@ public:
 
 private:
     OutputType _type;
-    std::unique_ptr<LightSource> _lightSource;
+    LightSource* _lightSource = nullptr;
     Servo _servo;
     uint8_t _pin; // For Servo
 };

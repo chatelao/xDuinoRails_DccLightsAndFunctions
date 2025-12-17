@@ -8,14 +8,7 @@
 #include <Arduino.h>
 #undef min
 #undef max
-#include <vector>
-#include <map>
 #include <cstdint>
-#ifdef ARDUINO_ARCH_AVR
-#include "compat/ArduinoSTL_AVR_Compat.h"
-#else
-#include <memory>
-#endif
 #include "interfaces/ICVAccess.h"
 #include "LightSources/LightSource.h"
 #include "PhysicalOutput.h"
@@ -58,9 +51,9 @@ public:
 
     /**
      * @brief Adds and initializes a light source physical output.
-     * @param lightSource A unique_ptr to a LightSource object.
+     * @param lightSource A pointer to a LightSource object. The controller takes ownership.
      */
-    void addLightSource(std::unique_ptr<LightSource> lightSource);
+    void addLightSource(LightSource* lightSource);
 
     /**
      * @brief Updates the state of all logical functions and effects. Call every loop.
@@ -154,17 +147,37 @@ private:
     void parseRcn227PerOutputV2(ICVAccess& cvAccess);
     void parseRcn227PerOutputV3(ICVAccess& cvAccess);
 
-    std::vector<PhysicalOutput> _outputs;
-    std::vector<LogicalFunction*> _logical_functions;
-    std::vector<ConditionVariable> _condition_variables;
-    std::vector<MappingRule> _mapping_rules;
+    PhysicalOutput* _outputs = nullptr;
+    size_t _outputs_count = 0;
+    size_t _outputs_capacity = 0;
+
+    LogicalFunction** _logical_functions = nullptr;
+    size_t _logical_functions_count = 0;
+    size_t _logical_functions_capacity = 0;
+
+    ConditionVariable* _condition_variables = nullptr;
+    size_t _condition_variables_count = 0;
+    size_t _condition_variables_capacity = 0;
+
+    MappingRule* _mapping_rules = nullptr;
+    size_t _mapping_rules_count = 0;
+    size_t _mapping_rules_capacity = 0;
 
     // --- Decoder State ---
     bool _function_states[MAX_DCC_FUNCTIONS] = {false};
     DecoderDirection _direction = DECODER_DIRECTION_FORWARD;
     uint16_t _speed = 0;
-    std::map<uint16_t, bool> m_binary_states;
-    std::map<uint16_t, bool> _cv_states;
+    struct KeyValue {
+        uint16_t key;
+        bool value;
+    };
+    KeyValue* m_binary_states = nullptr;
+    size_t m_binary_states_count = 0;
+    size_t m_binary_states_capacity = 0;
+
+    KeyValue* _cv_states = nullptr;
+    size_t _cv_states_count = 0;
+    size_t _cv_states_capacity = 0;
     bool _state_changed = true;
 };
 

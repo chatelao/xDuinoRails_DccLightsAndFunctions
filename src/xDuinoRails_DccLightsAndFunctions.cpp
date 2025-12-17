@@ -4,11 +4,62 @@
  */
 #include "xDuinoRails_DccLightsAndFunctions.h"
 #include "cv_definitions.h"
-#include <math.h>
 #include "effects/Effect.h"
 #include "LightSources/SingleLed.h"
+#include <utility> // For std::move and std::forward
 
 namespace xDuinoRails {
+
+// Helper function to manage dynamic arrays, mimicking vector::push_back
+template <typename T>
+void addToArray(T*& arr, size_t& count, size_t& capacity, const T& element) {
+    if (count == capacity) {
+        size_t new_capacity = (capacity == 0) ? 4 : capacity * 2;
+        T* new_arr = new T[new_capacity];
+        for (size_t i = 0; i < count; ++i) {
+            new_arr[i] = arr[i];
+        }
+        delete[] arr;
+        arr = new_arr;
+        capacity = new_capacity;
+    }
+    arr[count++] = element;
+}
+
+template <typename T>
+void addToArray(T*& arr, size_t& count, size_t& capacity, T&& element) {
+    if (count == capacity) {
+        size_t new_capacity = (capacity == 0) ? 4 : capacity * 2;
+        T* new_arr = new T[new_capacity];
+        for (size_t i = 0; i < count; ++i) {
+            new_arr[i] = std::move(arr[i]);
+        }
+        delete[] arr;
+        arr = new_arr;
+        capacity = new_capacity;
+    }
+    arr[count++] = std::forward<T>(element);
+}
+
+// Helper for our KeyValue store
+void setValue(AuxController::KeyValue*& arr, size_t& count, size_t& capacity, uint16_t key, bool value) {
+    for (size_t i = 0; i < count; ++i) {
+        if (arr[i].key == key) {
+            arr[i].value = value;
+            return;
+        }
+    }
+    addToArray(arr, count, capacity, {key, value});
+}
+
+bool getValue(const AuxController::KeyValue* arr, size_t count, uint16_t key) {
+    for (size_t i = 0; i < count; ++i) {
+        if (arr[i].key == key) {
+            return arr[i].value;
+        }
+    }
+    return false;
+}
 
 // --- AuxController ---
 
@@ -20,16 +71,16 @@ AuxController::~AuxController() {
 
 void AuxController::addPhysicalOutput(uint8_t pin, OutputType type) {
     if (type == OutputType::SERVO) {
-        _outputs.emplace_back(pin);
+        addToArray(_outputs, _outputs_count, _outputs_capacity, PhysicalOutput(pin));
     } else {
-        _outputs.emplace_back(std::make_unique<SingleLed>(pin));
+        addToArray(_outputs, _outputs_count, _outputs_capacity, PhysicalOutput(new SingleLed(pin)));
     }
-    _outputs.back().begin();
+    _outputs[_outputs_count - 1].begin();
 }
 
-void AuxController::addLightSource(std::unique_ptr<LightSource> lightSource) {
-    _outputs.emplace_back(std::move(lightSource));
-    _outputs.back().begin();
+void AuxController::addLightSource(LightSource* lightSource) {
+    addToArray(_outputs, _outputs_count, _outputs_capacity, PhysicalOutput(lightSource));
+    _outputs[_outputs_count - 1].begin();
 }
 
 void AuxController::update(uint32_t delta_ms) {
@@ -37,11 +88,11 @@ void AuxController::update(uint32_t delta_ms) {
         _state_changed = false;
         evaluateMapping();
     }
-    for (auto& func : _logical_functions) {
-        func->update(delta_ms);
+    for (size_t i = 0; i < _logical_functions_count; ++i) {
+        _logical_functions[i]->update(delta_ms);
     }
-    for (auto& output : _outputs) {
-        output.update(delta_ms);
+    for (size_t i = 0; i < _outputs_count; ++i) {
+        _outputs[i].update(delta_ms);
     }
 }
 
@@ -52,8 +103,6 @@ void AuxController::loadFromCVs(ICVAccess& cvAccess) {
         case FunctionMappingMethod::RCN_225:
             parseRcn225(cvAccess);
             break;
-        // Note: RCN-227 "per-function" is implemented for completeness but is not the recommended approach.
-        // The "per-output" methods below offer greater flexibility.
         case FunctionMappingMethod::RCN_227_PER_FUNCTION:
             parseRcn227PerFunction(cvAccess);
             break;
@@ -94,8 +143,8 @@ void AuxController::setSpeed(uint16_t speed) {
 }
 
 void AuxController::setBinaryState(uint16_t state_number, bool value) {
-    if (m_binary_states.find(state_number) == m_binary_states.end() || m_binary_states[state_number] != value) {
-        m_binary_states[state_number] = value;
+    if (getValue(m_binary_states, m_binary_states_count, state_number) != value) {
+        setValue(m_binary_states, m_binary_states_count, m_binary_states_capacity, state_number, value);
         _state_changed = true;
     }
 }
@@ -113,42 +162,67 @@ uint16_t AuxController::getSpeed() const {
 }
 
 bool AuxController::getConditionVariableState(uint16_t cv_id) const {
-    auto it = _cv_states.find(cv_id);
-    return (it != _cv_states.end()) ? it->second : false;
+    return getValue(_cv_states, _cv_states_count, cv_id);
 }
 
 bool AuxController::getBinaryState(uint16_t state_number) const {
-    auto it = m_binary_states.find(state_number);
-    return (it != m_binary_states.end()) ? it->second : false;
+    return getValue(m_binary_states, m_binary_states_count, state_number);
 }
 
 LogicalFunction* AuxController::getLogicalFunction(size_t index) {
-    return (index < _logical_functions.size()) ? _logical_functions[index] : nullptr;
+    return (index < _logical_functions_count) ? _logical_functions[index] : nullptr;
 }
 
 const LogicalFunction* AuxController::getLogicalFunction(size_t index) const {
-    return (index < _logical_functions.size()) ? _logical_functions[index] : nullptr;
+    return (index < _logical_functions_count) ? _logical_functions[index] : nullptr;
 }
 
 void AuxController::addLogicalFunction(LogicalFunction* function) {
-    _logical_functions.push_back(function);
+    addToArray(_logical_functions, _logical_functions_count, _logical_functions_capacity, function);
 }
 
 void AuxController::addConditionVariable(const ConditionVariable& cv) {
-    _condition_variables.push_back(cv);
+    addToArray(_condition_variables, _condition_variables_count, _condition_variables_capacity, cv);
 }
 
 void AuxController::addMappingRule(const MappingRule& rule) {
-    _mapping_rules.push_back(rule);
+    addToArray(_mapping_rules, _mapping_rules_count, _mapping_rules_capacity, rule);
 }
 
 void AuxController::reset() {
-    for (auto lf : _logical_functions) delete lf;
-    _logical_functions.clear();
-    _condition_variables.clear();
-    _mapping_rules.clear();
-    _cv_states.clear();
-    m_binary_states.clear();
+    for (size_t i = 0; i < _logical_functions_count; ++i) {
+        delete _logical_functions[i];
+    }
+    delete[] _logical_functions;
+    _logical_functions = nullptr;
+    _logical_functions_count = 0;
+    _logical_functions_capacity = 0;
+
+    delete[] _condition_variables;
+    _condition_variables = nullptr;
+    _condition_variables_count = 0;
+    _condition_variables_capacity = 0;
+
+    delete[] _mapping_rules;
+    _mapping_rules = nullptr;
+    _mapping_rules_count = 0;
+    _mapping_rules_capacity = 0;
+
+    delete[] _outputs;
+    _outputs = nullptr;
+    _outputs_count = 0;
+    _outputs_capacity = 0;
+
+    delete[] _cv_states;
+    _cv_states = nullptr;
+    _cv_states_count = 0;
+    _cv_states_capacity = 0;
+
+    delete[] m_binary_states;
+    m_binary_states = nullptr;
+    m_binary_states_count = 0;
+    m_binary_states_capacity = 0;
+
     for (int i = 0; i < MAX_DCC_FUNCTIONS; ++i) _function_states[i] = false;
     _direction = DECODER_DIRECTION_FORWARD;
     _speed = 0;
@@ -156,13 +230,15 @@ void AuxController::reset() {
 }
 
 void AuxController::evaluateMapping() {
-    _cv_states.clear();
-    for (const auto& cv : _condition_variables) {
-        _cv_states[cv.id] = cv.evaluate(*this);
+    _cv_states_count = 0;
+    for (size_t i = 0; i < _condition_variables_count; ++i) {
+        const auto& cv = _condition_variables[i];
+        setValue(_cv_states, _cv_states_count, _cv_states_capacity, cv.id, cv.evaluate(*this));
     }
-    for (const auto& rule : _mapping_rules) {
+    for (size_t i = 0; i < _mapping_rules_count; ++i) {
+        const auto& rule = _mapping_rules[i];
         if (rule.evaluate(*this)) {
-            if (rule.target_logical_function_id < _logical_functions.size()) {
+            if (rule.target_logical_function_id < _logical_functions_count) {
                 LogicalFunction* target_func = _logical_functions[rule.target_logical_function_id];
                 bool was_active = target_func->isActive();
                 switch (rule.action) {
@@ -180,7 +256,10 @@ void AuxController::evaluateMapping() {
 }
 
 PhysicalOutput* AuxController::getOutputById(uint8_t id) {
-    return (id < _outputs.size()) ? &_outputs[id] : nullptr;
+    if (id > 0 && id <= _outputs_count) {
+        return &_outputs[id - 1];
+    }
+    return nullptr;
 }
 
 void AuxController::parseRcn225(ICVAccess& cvAccess) {
@@ -192,14 +271,11 @@ void AuxController::parseRcn225(ICVAccess& cvAccess) {
 
         ConditionVariable cv;
         cv.id = i + 1;
+        addToArray(cv.conditions, cv.conditions_count, cv.conditions_capacity, Condition{TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, (uint8_t)(i > 1 ? i - 1 : 0)});
         if (i == 0) {
-            cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, DECODER_DIRECTION_FORWARD});
-            cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, 0});
+            addToArray(cv.conditions, cv.conditions_count, cv.conditions_capacity, Condition{TriggerSource::DIRECTION, TriggerComparator::EQ, DECODER_DIRECTION_FORWARD});
         } else if (i == 1) {
-            cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, DECODER_DIRECTION_REVERSE});
-            cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, 0});
-        } else {
-            cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, (uint8_t)(i - 1)});
+            addToArray(cv.conditions, cv.conditions_count, cv.conditions_capacity, Condition{TriggerSource::DIRECTION, TriggerComparator::EQ, DECODER_DIRECTION_REVERSE});
         }
         addConditionVariable(cv);
 
@@ -209,10 +285,10 @@ void AuxController::parseRcn225(ICVAccess& cvAccess) {
                 LogicalFunction* lf = new LogicalFunction(createEffectFromCVs(cvAccess, physical_output_id));
                 lf->addOutput(getOutputById(physical_output_id));
                 addLogicalFunction(lf);
-                uint8_t lf_idx = _logical_functions.size() - 1;
+                uint8_t lf_idx = _logical_functions_count - 1;
                 MappingRule rule;
                 rule.target_logical_function_id = lf_idx;
-                rule.positive_conditions.push_back(cv.id);
+                addToArray(rule.positive_conditions, rule.positive_conditions_count, rule.positive_conditions_capacity, cv.id);
                 rule.action = MappingAction::ACTIVATE;
                 addMappingRule(rule);
             }
@@ -227,7 +303,14 @@ void AuxController::parseRcn227PerOutputV3(ICVAccess& cvAccess) {
     for (int output_num = 0; output_num < num_outputs; ++output_num) {
         LogicalFunction* lf = nullptr;
         uint16_t base_cv = 257 + (output_num * 8);
-        std::vector<uint16_t> activating_cv_ids, blocking_cv_ids;
+
+        uint16_t* activating_cv_ids = nullptr;
+        size_t activating_cv_ids_count = 0;
+        size_t activating_cv_ids_capacity = 0;
+
+        uint16_t* blocking_cv_ids = nullptr;
+        size_t blocking_cv_ids_count = 0;
+        size_t blocking_cv_ids_capacity = 0;
 
         for (int i = 0; i < 4; ++i) {
             uint8_t cv_value = cvAccess.readCV(base_cv + i);
@@ -237,11 +320,15 @@ void AuxController::parseRcn227PerOutputV3(ICVAccess& cvAccess) {
             bool is_blocking = (dir_bits == 0x03);
             ConditionVariable cv;
             cv.id = CV_ID_BASE_RCN227_PER_OUTPUT_V3 + (output_num * 8) + i;
-            cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, func_num});
-            if (dir_bits == 0x01) cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, DECODER_DIRECTION_FORWARD});
-            else if (dir_bits == 0x02) cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, DECODER_DIRECTION_REVERSE});
+            addToArray(cv.conditions, cv.conditions_count, cv.conditions_capacity, Condition{TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, func_num});
+            if (dir_bits == 0x01) addToArray(cv.conditions, cv.conditions_count, cv.conditions_capacity, Condition{TriggerSource::DIRECTION, TriggerComparator::EQ, DECODER_DIRECTION_FORWARD});
+            else if (dir_bits == 0x02) addToArray(cv.conditions, cv.conditions_count, cv.conditions_capacity, Condition{TriggerSource::DIRECTION, TriggerComparator::EQ, DECODER_DIRECTION_REVERSE});
             addConditionVariable(cv);
-            (is_blocking ? blocking_cv_ids : activating_cv_ids).push_back(cv.id);
+            if (is_blocking) {
+                addToArray(blocking_cv_ids, blocking_cv_ids_count, blocking_cv_ids_capacity, cv.id);
+            } else {
+                addToArray(activating_cv_ids, activating_cv_ids_count, activating_cv_ids_capacity, cv.id);
+            }
         }
 
         for (int i = 0; i < 2; ++i) {
@@ -252,26 +339,36 @@ void AuxController::parseRcn227PerOutputV3(ICVAccess& cvAccess) {
             uint16_t value = ((cv_high & 0x7F) << 8) | cv_low;
             ConditionVariable cv;
             cv.id = CV_ID_BASE_RCN227_PER_OUTPUT_V3 + (output_num * 8) + 4 + i;
-            if (value <= 68) cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, (uint8_t)value});
-            else cv.conditions.push_back({TriggerSource::BINARY_STATE, TriggerComparator::IS_TRUE, (uint8_t)(value - 69)});
+            if (value <= 68) addToArray(cv.conditions, cv.conditions_count, cv.conditions_capacity, Condition{TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, (uint8_t)value});
+            else addToArray(cv.conditions, cv.conditions_count, cv.conditions_capacity, Condition{TriggerSource::BINARY_STATE, TriggerComparator::IS_TRUE, (uint16_t)(value - 69)});
             addConditionVariable(cv);
-            (is_blocking ? blocking_cv_ids : activating_cv_ids).push_back(cv.id);
+             if (is_blocking) {
+                addToArray(blocking_cv_ids, blocking_cv_ids_count, blocking_cv_ids_capacity, cv.id);
+            } else {
+                addToArray(activating_cv_ids, activating_cv_ids_count, activating_cv_ids_capacity, cv.id);
+            }
         }
 
-        if (!activating_cv_ids.empty()) {
+        if (activating_cv_ids_count > 0) {
             lf = new LogicalFunction(createEffectFromCVs(cvAccess, output_num + 1));
             lf->addOutput(getOutputById(output_num + 1));
             addLogicalFunction(lf);
-            uint8_t lf_idx = _logical_functions.size() - 1;
-            for (uint16_t activating_id : activating_cv_ids) {
+            uint8_t lf_idx = _logical_functions_count - 1;
+            for (size_t i = 0; i < activating_cv_ids_count; ++i) {
                 MappingRule rule;
                 rule.target_logical_function_id = lf_idx;
-                rule.positive_conditions.push_back(activating_id);
-                rule.negative_conditions = blocking_cv_ids;
+                addToArray(rule.positive_conditions, rule.positive_conditions_count, rule.positive_conditions_capacity, activating_cv_ids[i]);
+
+                for(size_t j = 0; j < blocking_cv_ids_count; ++j) {
+                    addToArray(rule.negative_conditions, rule.negative_conditions_count, rule.negative_conditions_capacity, blocking_cv_ids[j]);
+                }
+
                 rule.action = MappingAction::ACTIVATE;
                 addMappingRule(rule);
             }
         }
+        delete[] activating_cv_ids;
+        delete[] blocking_cv_ids;
     }
 }
 
@@ -291,15 +388,15 @@ void AuxController::parseRcn227PerFunction(ICVAccess& cvAccess) {
 
             ConditionVariable cv;
             cv.id = (func_num * 2) + dir + 1;
-            cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, (uint8_t)func_num});
-            cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, (uint8_t)((dir == 0) ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE)});
+            addToArray(cv.conditions, cv.conditions_count, cv.conditions_capacity, Condition{TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, (uint8_t)func_num});
+            addToArray(cv.conditions, cv.conditions_count, cv.conditions_capacity, Condition{TriggerSource::DIRECTION, TriggerComparator::EQ, (uint8_t)((dir == 0) ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE)});
             addConditionVariable(cv);
 
             uint16_t blocking_cv_id = 0;
             if (blocking_func_num != 255) {
                 ConditionVariable blocking_cv;
                 blocking_cv.id = CV_ID_BASE_RCN227_PER_FUNCTION_BLOCKING + blocking_func_num;
-                blocking_cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, blocking_func_num});
+                addToArray(blocking_cv.conditions, blocking_cv.conditions_count, blocking_cv.conditions_capacity, Condition{TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, blocking_func_num});
                 addConditionVariable(blocking_cv);
                 blocking_cv_id = blocking_cv.id;
             }
@@ -310,12 +407,12 @@ void AuxController::parseRcn227PerFunction(ICVAccess& cvAccess) {
                     LogicalFunction* lf = new LogicalFunction(createEffectFromCVs(cvAccess, physical_output_id));
                     lf->addOutput(getOutputById(physical_output_id));
                     addLogicalFunction(lf);
-                    uint8_t lf_idx = _logical_functions.size() - 1;
+                    uint8_t lf_idx = _logical_functions_count - 1;
 
                     MappingRule rule;
                     rule.target_logical_function_id = lf_idx;
-                    rule.positive_conditions.push_back(cv.id);
-                    if (blocking_cv_id != 0) rule.negative_conditions.push_back(blocking_cv_id);
+                    addToArray(rule.positive_conditions, rule.positive_conditions_count, rule.positive_conditions_capacity, cv.id);
+                    if (blocking_cv_id != 0) addToArray(rule.negative_conditions, rule.negative_conditions_count, rule.negative_conditions_capacity, blocking_cv_id);
                     rule.action = MappingAction::ACTIVATE;
                     addMappingRule(rule);
                 }
@@ -344,19 +441,19 @@ void AuxController::parseRcn227PerOutputV1(ICVAccess& cvAccess) {
                 lf->addOutput(getOutputById(output_num + 1));
                 addLogicalFunction(lf);
             }
-            uint8_t lf_idx = _logical_functions.size() - 1;
+            uint8_t lf_idx = _logical_functions_count - 1;
 
             for (int func_num = 0; func_num < 32; ++func_num) {
                 if ((func_mask >> func_num) & 1) {
                     ConditionVariable cv;
                     cv.id = CV_ID_BASE_RCN227_PER_OUTPUT_V1 + (output_num * 64) + (dir * 32) + func_num; // Unique ID
-                    cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, (uint8_t)func_num});
-                    cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, (uint8_t)((dir == 0) ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE)});
+                    addToArray(cv.conditions, cv.conditions_count, cv.conditions_capacity, Condition{TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, (uint8_t)func_num});
+                    addToArray(cv.conditions, cv.conditions_count, cv.conditions_capacity, Condition{TriggerSource::DIRECTION, TriggerComparator::EQ, (uint8_t)((dir == 0) ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE)});
                     addConditionVariable(cv);
 
                     MappingRule rule;
                     rule.target_logical_function_id = lf_idx;
-                    rule.positive_conditions.push_back(cv.id);
+                    addToArray(rule.positive_conditions, rule.positive_conditions_count, rule.positive_conditions_capacity, cv.id);
                     rule.action = MappingAction::ACTIVATE;
                     addMappingRule(rule);
                 }
@@ -420,9 +517,9 @@ void AuxController::parseRcn227PerOutputV2(ICVAccess& cvAccess) {
                 ConditionVariable blocking_cv;
                 blocking_cv.id = CV_ID_BASE_RCN227_PER_OUTPUT_V2_BLOCKING + blocking_func; // Unique ID
                 if (blocking_func > 28) {
-                    blocking_cv.conditions.push_back({TriggerSource::BINARY_STATE, TriggerComparator::IS_TRUE, (uint16_t)(blocking_func)});
+                    addToArray(blocking_cv.conditions, blocking_cv.conditions_count, blocking_cv.conditions_capacity, Condition{TriggerSource::BINARY_STATE, TriggerComparator::IS_TRUE, (uint16_t)(blocking_func)});
                 } else {
-                    blocking_cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, blocking_func});
+                    addToArray(blocking_cv.conditions, blocking_cv.conditions_count, blocking_cv.conditions_capacity, Condition{TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, blocking_func});
                 }
                 addConditionVariable(blocking_cv);
                 blocking_cv_id = blocking_cv.id;
@@ -435,22 +532,22 @@ void AuxController::parseRcn227PerOutputV2(ICVAccess& cvAccess) {
                         lf->addOutput(getOutputById(output_num + 1));
                         addLogicalFunction(lf);
                     }
-                    uint8_t lf_idx = _logical_functions.size() - 1;
+                    uint8_t lf_idx = _logical_functions_count - 1;
 
                     ConditionVariable cv;
                     cv.id = CV_ID_BASE_RCN227_PER_OUTPUT_V2 + (output_num * 8) + (dir * 4) + i; // Unique ID
                     if (funcs[i] > 28) {
-                        cv.conditions.push_back({TriggerSource::BINARY_STATE, TriggerComparator::IS_TRUE, (uint16_t)(funcs[i])});
+                        addToArray(cv.conditions, cv.conditions_count, cv.conditions_capacity, Condition{TriggerSource::BINARY_STATE, TriggerComparator::IS_TRUE, (uint16_t)(funcs[i])});
                     } else {
-                        cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, funcs[i]});
+                        addToArray(cv.conditions, cv.conditions_count, cv.conditions_capacity, Condition{TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, funcs[i]});
                     }
-                    cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, (uint8_t)((dir == 0) ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE)});
+                    addToArray(cv.conditions, cv.conditions_count, cv.conditions_capacity, Condition{TriggerSource::DIRECTION, TriggerComparator::EQ, (uint8_t)((dir == 0) ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE)});
                     addConditionVariable(cv);
 
                     MappingRule rule;
                     rule.target_logical_function_id = lf_idx;
-                    rule.positive_conditions.push_back(cv.id);
-                    if (blocking_cv_id != 0) rule.negative_conditions.push_back(blocking_cv_id);
+                    addToArray(rule.positive_conditions, rule.positive_conditions_count, rule.positive_conditions_capacity, cv.id);
+                    if (blocking_cv_id != 0) addToArray(rule.negative_conditions, rule.negative_conditions_count, rule.negative_conditions_capacity, blocking_cv_id);
                     rule.action = MappingAction::ACTIVATE;
                     addMappingRule(rule);
                 }
