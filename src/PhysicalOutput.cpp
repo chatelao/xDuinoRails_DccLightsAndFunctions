@@ -1,10 +1,11 @@
 #include "PhysicalOutput.h"
+#include <utility> // For std::exchange
 
 namespace xDuinoRails {
 
-PhysicalOutput::PhysicalOutput(std::unique_ptr<LightSource> lightSource) :
+PhysicalOutput::PhysicalOutput(LightSource* lightSource) :
     _type(OutputType::LIGHT_SOURCE),
-    _lightSource(std::move(lightSource)),
+    _lightSource(lightSource),
     _pin(0)
 {}
 
@@ -13,6 +14,28 @@ PhysicalOutput::PhysicalOutput(uint8_t pin) :
     _lightSource(nullptr),
     _pin(pin)
 {}
+
+PhysicalOutput::~PhysicalOutput() {
+    delete _lightSource;
+}
+
+PhysicalOutput::PhysicalOutput(PhysicalOutput&& other) noexcept :
+    _type(other._type),
+    _lightSource(std::exchange(other._lightSource, nullptr)),
+    _servo(other._servo),
+    _pin(other._pin)
+{}
+
+PhysicalOutput& PhysicalOutput::operator=(PhysicalOutput&& other) noexcept {
+    if (this != &other) {
+        delete _lightSource;
+        _type = other._type;
+        _lightSource = std::exchange(other._lightSource, nullptr);
+        _servo = other._servo;
+        _pin = other._pin;
+    }
+    return *this;
+}
 
 void PhysicalOutput::begin() {
     if (_type == OutputType::LIGHT_SOURCE) {

@@ -1,8 +1,8 @@
 #ifndef FUNCTIONMAPPING_H
 #define FUNCTIONMAPPING_H
 
-#include <vector>
 #include <cstdint>
+#include <cstddef> // For size_t
 
 namespace xDuinoRails {
 
@@ -53,15 +53,35 @@ struct Condition {
 
 struct ConditionVariable {
     uint16_t id;
-    std::vector<Condition> conditions;
+    Condition* conditions = nullptr;
+    size_t conditions_count = 0;
+    size_t conditions_capacity = 0;
+
+    ConditionVariable() = default;
+    ~ConditionVariable();
+    ConditionVariable(const ConditionVariable& other);
+    ConditionVariable& operator=(const ConditionVariable& other);
+
     bool evaluate(const AuxController& controller) const;
 };
 
 struct MappingRule {
     uint8_t target_logical_function_id;
-    std::vector<uint16_t> positive_conditions;
-    std::vector<uint16_t> negative_conditions;
+    uint16_t* positive_conditions = nullptr;
+    size_t positive_conditions_count = 0;
+    size_t positive_conditions_capacity = 0;
+
+    uint16_t* negative_conditions = nullptr;
+    size_t negative_conditions_count = 0;
+    size_t negative_conditions_capacity = 0;
+
     MappingAction action;
+
+    MappingRule() = default;
+    ~MappingRule();
+    MappingRule(const MappingRule& other);
+    MappingRule& operator=(const MappingRule& other);
+
     bool evaluate(const AuxController& controller) const;
 };
 

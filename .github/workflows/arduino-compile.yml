@@ -23,7 +23,6 @@ jobs:
             - name: Servo
             - name: Adafruit NeoPixel
             - name: FastLED
-            - name: ArduinoSTL
           cli-compile-flags: |
             - --build-property
             - "build.extra_flags=-std=gnu++11"
