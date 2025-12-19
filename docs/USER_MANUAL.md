@@ -18,7 +18,9 @@ To select which mapping method your decoder should use, you must set **CV 96**. 
 
 ## Method 1: Basic RCN-225 Function Mapping (CV 96 = 1)
 
-This is the simplest and most common method for function mapping, directly compatible with the original NMRA DCC standards. It uses CVs 33 through 46 to link functions F0-F12 to physical outputs.
+This is the simplest and most common method for function mapping, directly compatible with the original NMRA DCC standards.[^1] It uses CVs 33 through 46 to link functions F0-F12 to physical outputs.
+
+[^1]: As defined in RCN-225, Section 2.1, "CV 33 – CV 46 Function Mapping for F0 to F12".
 
 ### How it Works
 
